@@ -11,3 +11,10 @@
 - Add placeholder for each
 - Add .gitignore
 - Add requirements
+
+## 20/12/2025
+
+- Create booking_service.py in business_logic
+- Create models.py in business_logic
+- Create booking_repository.py in persistence
+- Create app.py
