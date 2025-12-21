@@ -27,19 +27,19 @@ Tài liệu theo dõi tiến độ thực hiện bài tập lớn, chuyển đ�
 
 ### Lab 3: Hiện thực hóa (Implementation)
 
-- [ ] **Setup Project Python Flask:**
+- [x] **Setup Project Python Flask:**
   - [x] Cấu trúc thư mục: `presentation/`, `business_logic/`, `persistence/`.
-  - [ ] Cài đặt môi trường ảo (venv) và thư viện Flask.
+  - [x] Cài đặt môi trường ảo (venv) và thư viện Flask.
 - [ ] **Database & Models:**
-  - [ ] Tạo Class `Movie` (id, title, genre, duration, release_date).
+  - [x] Tạo Class `Movie` (id, title, genre, duration, release_date).
   - [ ] Tạo `MovieRepository`: Kết nối DB, xử lý query (SQL/ORM).
-- [ ] **Business Logic:**
-  - [ ] Tạo `MovieService`: Validate dữ liệu (ví dụ: phim phải có tên, thời lượng > 0).
-- [ ] **API Endpoints (Presentation):**
-  - [ ] `POST /api/movies`: Thêm phim mới.
-  - [ ] `GET /api/movies`: Lấy danh sách phim.
-  - [ ] `GET /api/movies/{id}`: Xem chi tiết phim.
-- [ ] **Test:** Kiểm thử API bằng Postman.
+- [x] **Business Logic:**
+  - [x] Tạo `MovieService`: Validate dữ liệu (ví dụ: phim phải có tên, thời lượng > 0).
+- [x] **API Endpoints (Presentation):**
+  - [x] `POST /api/movies`: Thêm phim mới.
+  - [x] `GET /api/movies`: Lấy danh sách phim.
+  - [x] `GET /api/movies/{id}`: Xem chi tiết phim.
+- [x] **Test:** Kiểm thử API bằng Postman.
 
 ## Giai đoạn 2: Thiết kế Microservices
 
