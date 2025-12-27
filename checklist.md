@@ -47,14 +47,14 @@ Tài liệu theo dõi tiến độ thực hiện bài tập lớn, chuyển đ�
 
 ### Lab 4: Phân rã & Giao tiếp (Decomposition)
 
-- [ ] **Xác định các Microservices:**
-  - [ ] **Movie Service:** Quản lý phim, lịch chiếu (Tách từ module Lab 3).
-  - [ ] **Booking Service:** Quản lý đặt vé, chọn ghế (Core nghiệp vụ).
-  - [ ] **Notification Service:** Gửi vé điện tử, email xác nhận.
-- [ ] **Thiết kế API Contract (Đặc tả API):**
+- [x] **Xác định các Microservices:**
+  - [x] **Movie Service:** Quản lý phim, lịch chiếu (Tách từ module Lab 3).
+  - [x] **Booking Service:** Quản lý đặt vé, chọn ghế (Core nghiệp vụ).
+  - [x] **Notification Service:** Gửi vé điện tử, email xác nhận.
+- [x] **Thiết kế API Contract (Đặc tả API):**
   - [ ] Định nghĩa input/output JSON cho từng service.
-- [ ] **Vẽ sơ đồ C4 Model (Level 1 - System Context):**
-  - [ ] Thể hiện Web App, Admin, Payment Gateway và Hệ thống đặt vé.
+- [x] **Vẽ sơ đồ C4 Model (Level 1 - System Context):**
+  - [x] Thể hiện Web App, Admin, Payment Gateway và Hệ thống đặt vé.
 
 ## Giai đoạn 3: Triển khai Microservices & Gateway
 

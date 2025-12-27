@@ -1,4 +1,4 @@
-from movie.models.models import Booking
+from booking.models.booking_models import Booking
 
 booking_db = {}
 next_id = 1

@@ -1,30 +1,36 @@
 from flask import Flask, request, jsonify
-from business_logic.booking_service import BookingService
+from movie.business_logic.movie_service import MovieService
 
 app = Flask(__name__)
-booking_service = BookingService()
+movie_service = MovieService()
 
-@app.route('/api/bookings', methods=['POST'])
-def create_booking():
+
+@app.route('/api/movies', methods=['POST'])
+def create_movie():
     data = request.json
     try:
-        booking = booking_service.create_booking(
-            user_name=data.get('user_name'),
-            showtime_id=data.get('showtime_id'),
-            seat_number=data.get('seat_number'),
-            price=data.get('price')
+        movie = movie_service.create_movie(
+            title=data.get('title'),
+            genre=data.get('genre'),
+            duration=data.get('duration'),
+            release_date=data.get('release_date')
         )
-        return jsonify(booking.to_dict()), 201
+        return jsonify(movie.to_dict()), 201
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
 
-@app.route('/api/bookings/<booking_id>', methods=['GET'])
-def get_booking(booking_id):
+@app.route('/api/movies/<movie_id>', methods=['GET'])
+def get_movie(movie_id):
     try:
-        booking = booking_service.get_booking_details(booking_id)
-        return jsonify(booking.to_dict()), 200
+        movie = movie_service.get_movie_details(movie_id)
+        return jsonify(movie.to_dict()), 200
     except ValueError as e:
         return jsonify({"error": str(e)}), 404
 
+@app.route('/api/movies', methods=['GET'])
+def get_movies():
+    movies = movie_service.get_all_movies()
+    return jsonify([m.to_dict() for m in movies]), 200
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(port=5001, debug=True)

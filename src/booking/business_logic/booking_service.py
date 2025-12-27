@@ -1,4 +1,4 @@
-from persistence.booking_repository import BookingRepository
+from booking.persistence.booking_repository import BookingRepository
 
 class BookingService:
 
