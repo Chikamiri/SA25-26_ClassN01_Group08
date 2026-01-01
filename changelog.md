@@ -18,3 +18,10 @@
 - Create models.py in business_logic
 - Create booking_repository.py in persistence
 - Create app.py
+
+## 1/1/2026
+
+- Implement database (`movies.db` & `booking.db`)
+- Refactor project structure into Microservices: `movie` (Admin) & `booking` (Customer)
+- Implement `MovieService`: Add logic to auto-generate seats when creating showtimes
+- Implement `BookingService`: Add logic to view available seats and book tickets

@@ -1,22 +1,30 @@
 from booking.persistence.booking_repository import BookingRepository
 
 class BookingService:
-
     def __init__(self):
         self.repo = BookingRepository()
 
-    def create_booking(self, user_name, showtime_id, seat_number, price):
-        if not user_name or not showtime_id or not seat_number:
-            raise ValueError("Dữ liệu không hợp lệ: Thiếu thông tin người dùng hoặc ghế.")
-        if price < 0:
-            raise ValueError("Giá vé không được nhỏ hơn 0.")
-        return self.repo.save(user_name, showtime_id, seat_number, price)
+    def get_available_seats(self, showtime_id):
+        seats = self.repo.get_seats_by_showtime(showtime_id)
+        return [seat.to_dict() for seat in seats if seat.status == 'available']
 
-    def get_booking_details(self, booking_id):
-        booking = self.repo.find_by_id(booking_id)
-        if not booking:
-            raise ValueError(f"Không tìm thấy đơn đặt vé với ID {booking_id}")
-        return booking
+    def book_ticket(self, showtime_id, seat_number, user_name):
+        seat = self.repo.find_seat(showtime_id, seat_number)
         
-    def get_all_bookings(self):
-        return self.repo.find_all()
+        if not seat:
+            raise ValueError("Invalid seat number")
+        if seat.status != 'available':
+            raise ValueError(f"seat {seat_number} alread taken")
+
+        success = self.repo.update_seat_status(seat.id, "booked")
+        if success:
+            return {
+                "message": "Ticket Purchase successful",
+                "ticket": {
+                    "seat": seat_number,
+                    "customer": user_name,
+                    "showtime_id": showtime_id
+                }
+            }
+        else:
+            raise Exception("Lỗi hệ thống")
