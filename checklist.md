@@ -62,8 +62,8 @@ Tài liệu theo dõi tiến độ thực hiện bài tập lớn, chuyển đ�
 
 ### Lab 5: Xây dựng Movie Service độc lập
 
-- [ ] **Tách Project:** Tạo folder riêng cho `movie_service`.
-- [ ] **Database riêng:** Setup Database riêng cho Movie (tách khỏi DB chung cũ).
+- [x] **Tách Project:** Tạo folder riêng cho `movie_service`.
+- [x] **Database riêng:** Setup Database riêng cho Movie (tách khỏi DB chung cũ).
 - [ ] **Code API hoàn chỉnh:**
   - [ ] Tìm kiếm phim theo tên/thể loại.
   - [ ] CRUD suất chiếu (Showtimes).

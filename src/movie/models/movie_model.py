@@ -16,14 +16,16 @@ class Movie:
         }
 
 class Showtime:
-    def __init__(self, id, movie_id, start_time):
+    def __init__(self, id, movie_id, start_time, end_time):
         self.id = id
         self.movie_id = movie_id
         self.start_time = start_time
+        self.end_time = end_time
     
     def to_dict(self):
         return {
             "id": self.id,
             "movie_id": self.movie_id,
-            "start_time": self.start_time
+            "start_time": self.start_time,
+            "end_time": self.end_time
         }

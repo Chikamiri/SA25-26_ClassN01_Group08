@@ -25,3 +25,9 @@
 - Refactor project structure into Microservices: `movie` (Admin) & `booking` (Customer)
 - Implement `MovieService`: Add logic to auto-generate seats when creating showtimes
 - Implement `BookingService`: Add logic to view available seats and book tickets
+
+## 2/1/2026
+
+- Add search functionality (filter by title & genre) for movies
+- Update Movie & Showtime models to support manual ID input
+- Complete CRUD operations for Movie Service
