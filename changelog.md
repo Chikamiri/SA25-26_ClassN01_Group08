@@ -31,3 +31,8 @@
 - Add search functionality (filter by title & genre) for movies
 - Update Movie & Showtime models to support manual ID input
 - Complete CRUD operations for Movie Service
+
+## 3/1/2026
+
+- Add Api gateway
+- Add run_app.py 
