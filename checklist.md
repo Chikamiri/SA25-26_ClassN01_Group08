@@ -64,16 +64,16 @@ Tài liệu theo dõi tiến độ thực hiện bài tập lớn, chuyển đ�
 
 - [x] **Tách Project:** Tạo folder riêng cho `movie_service`.
 - [x] **Database riêng:** Setup Database riêng cho Movie (tách khỏi DB chung cũ).
-- [ ] **Code API hoàn chỉnh:**
-  - [ ] Tìm kiếm phim theo tên/thể loại.
-  - [ ] CRUD suất chiếu (Showtimes).
+- [x] **Code API hoàn chỉnh:**
+  - [x] Tìm kiếm phim theo tên/thể loại.
+  - [x] CRUD suất chiếu (Showtimes).
 
 ### Lab 6: API Gateway Pattern
 
-- [ ] **Setup Gateway Project:** Tạo một Flask app mới làm Gateway (chạy port 5000).
-- [ ] **Routing (Định tuyến):**
-  - [ ] Request `/api/movies` -> Chuyển tiếp sang `Movie Service` (port 5001).
-  - [ ] Request `/api/bookings` -> Chuyển tiếp sang `Booking Service` (port 5002).
+- [x] **Setup Gateway Project:** Tạo một Flask app mới làm Gateway (chạy port 5000).
+- [x] **Routing (Định tuyến):**
+  - [x] Request `/api/movies` -> Chuyển tiếp sang `Movie Service` (port 5001).
+  - [x] Request `/api/bookings` -> Chuyển tiếp sang `Booking Service` (port 5002).
 - [ ] **Security (Giả lập):**
   - [ ] Check Header `Authorization`.
   - [ ] Chặn request nếu token không hợp lệ trước khi vào service con.
