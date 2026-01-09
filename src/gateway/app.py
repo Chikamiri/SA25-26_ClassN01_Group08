@@ -8,6 +8,18 @@ app = Flask(__name__)
 MOVIE_SERVICE_URL = "http://127.0.0.1:5001"
 BOOKING_SERVICE_URL = "http://127.0.0.1:5002"
 
+def validate_token():
+    auth_header = request.headers.get('Authorization')
+    if not auth_header:
+        return False, jsonify({"error": "Authorization token is missing"}), 401
+    
+    # Simulate token validation
+    token = auth_header.split(" ")[1] if len(auth_header.split(" ")) > 1 else None
+    if not token or token == "invalid_token": # Replace with actual token validation logic
+        return False, jsonify({"error": "Invalid token"}), 401
+    
+    return True, None, None
+
 def forward_request(service_url, path):
     url = f"{service_url}{path}"
     
@@ -29,16 +41,25 @@ def forward_request(service_url, path):
 @app.route('/api/movies', methods=['GET', 'POST'])
 @app.route('/api/movies/<path:path>', methods=['GET', 'PUT', 'DELETE'])
 def movie_proxy(path=''):
+    is_valid, response, status_code = validate_token()
+    if not is_valid:
+        return response, status_code
     return forward_request(MOVIE_SERVICE_URL, request.path)
 
 @app.route('/api/showtimes', methods=['GET', 'POST'])
 @app.route('/api/showtimes/<path:path>', methods=['GET', 'PUT', 'DELETE'])
 def showtime_proxy(path=''):
+    is_valid, response, status_code = validate_token()
+    if not is_valid:
+        return response, status_code
     return forward_request(MOVIE_SERVICE_URL, request.path)
 
 @app.route('/api/bookings', methods=['GET', 'POST'])
 @app.route('/api/bookings/<path:path>', methods=['GET', 'PUT', 'DELETE'])
 def booking_proxy(path=''):
+    is_valid, response, status_code = validate_token()
+    if not is_valid:
+        return response, status_code
     return forward_request(BOOKING_SERVICE_URL, request.path)
 
 if __name__ == '__main__':

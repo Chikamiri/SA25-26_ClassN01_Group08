@@ -74,9 +74,9 @@ Tài liệu theo dõi tiến độ thực hiện bài tập lớn, chuyển đ�
 - [x] **Routing (Định tuyến):**
   - [x] Request `/api/movies` -> Chuyển tiếp sang `Movie Service` (port 5001).
   - [x] Request `/api/bookings` -> Chuyển tiếp sang `Booking Service` (port 5002).
-- [ ] **Security (Giả lập):**
-  - [ ] Check Header `Authorization`.
-  - [ ] Chặn request nếu token không hợp lệ trước khi vào service con.
+- [x] **Security (Giả lập):**
+  - [x] Check Header `Authorization`.
+  - [x] Chặn request nếu token không hợp lệ trước khi vào service con.
 
 ## Giai đoạn 4: Kiến trúc Hướng sự kiện (Event-Driven)
 
