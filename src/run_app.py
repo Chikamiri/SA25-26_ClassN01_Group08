@@ -5,9 +5,11 @@ import signal
 import sys
 
 services = [
-    {"name": "Movie Service (Admin)",   "cmd": ["python", "movie/app.py"],   "port": 5001},
-    {"name": "Booking Service (Customer)", "cmd": ["python", "booking/app.py"], "port": 5002},
-    {"name": "API Gateway",             "cmd": ["python", "gateway/app.py"], "port": 5000},
+    {"name": "Movie Service",       "cmd": ["python", "movie/app.py"],        "port": 5001},
+    {"name": "Booking Service",     "cmd": ["python", "booking/app.py"],      "port": 5002},
+    {"name": "Payment Service",     "cmd": ["python", "payment/app.py"],      "port": 5003},
+    {"name": "Notification Service","cmd": ["python", "notification/app.py"], "port": "N/A"},
+    {"name": "API Gateway",         "cmd": ["python", "gateway/app.py"],      "port": 5000},
 ]
 
 processes = []
@@ -22,7 +24,7 @@ def start_services():
         print(f"   - Starting {service['name']}...")
         p = subprocess.Popen(service["cmd"], shell=True, cwd=cwd)
         processes.append(p)
-        time.sleep(1)
+        time.sleep(1) 
 
     print("---------------------------------------")
     print("System is ready!")

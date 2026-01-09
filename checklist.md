@@ -74,9 +74,9 @@ Tài liệu theo dõi tiến độ thực hiện bài tập lớn, chuyển đ�
 - [x] **Routing (Định tuyến):**
   - [x] Request `/api/movies` -> Chuyển tiếp sang `Movie Service` (port 5001).
   - [x] Request `/api/bookings` -> Chuyển tiếp sang `Booking Service` (port 5002).
-- [ ] **Security (Giả lập):**
-  - [ ] Check Header `Authorization`.
-  - [ ] Chặn request nếu token không hợp lệ trước khi vào service con.
+- [x] **Security (Giả lập):**
+  - [x] Check Header `Authorization`.
+  - [x] Chặn request nếu token không hợp lệ trước khi vào service con.
 
 ## Giai đoạn 4: Kiến trúc Hướng sự kiện (Event-Driven)
 
@@ -84,7 +84,7 @@ Tài liệu theo dõi tiến độ thực hiện bài tập lớn, chuyển đ�
 
 ### Lab 7: Tích hợp RabbitMQ
 
-- [ ] **Setup RabbitMQ:** Chạy bằng Docker hoặc cài trực tiếp.
+- [x] **Setup RabbitMQ:** Chạy bằng Docker hoặc cài trực tiếp.
 - [ ] **Booking Service (Producer):**
   - [ ] Khi đặt vé thành công -> Gửi message `OrderPlacedEvent` vào hàng đợi (Queue).
   - [ ] Message chứa: `ticket_id`, `email`, `movie_name`.

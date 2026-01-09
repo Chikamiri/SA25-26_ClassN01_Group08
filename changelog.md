@@ -36,3 +36,12 @@
 
 - Add Api gateway
 - Add run_app.py 
+
+## 9/1/2026
+
+- Implement security api-key
+- Refactor architecture: Decouple `MovieService` and `BookingService` using Internal APIs (replaced direct Repository access).
+- Implement `PaymentService`: Handle payments and invoice generation with SQLite.
+- Implement `NotificationService`: Consumer service to listen for RabbitMQ events (Mock Email/Print logs).
+- Integrate RabbitMQ (Docker): Enable Event-Driven communication for `OrderPlacedEvent` and `InvoiceGenerated` events.
+- Update `run_app.py`: Register Payment and Notification services to the orchestration script.

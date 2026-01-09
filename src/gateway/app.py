@@ -7,10 +7,21 @@ app = Flask(__name__)
 
 MOVIE_SERVICE_URL = "http://127.0.0.1:5001"
 BOOKING_SERVICE_URL = "http://127.0.0.1:5002"
+PAYMENT_SERVICE_URL =  "http://127.0.0.1:5003"
+
+
+VALID_API_KEY = "BO_CHIKA"
+
+
+@app.before_request
+def check_security():
+    client_key = request.headers.get('peko-key')
+    
+    if client_key != VALID_API_KEY:
+        return jsonify({"error": "Unauthorized: Invalid or missing API Key"}), 401
 
 def forward_request(service_url, path):
     url = f"{service_url}{path}"
-    
     try:
         response = requests.request(
             method=request.method,
@@ -41,6 +52,11 @@ def showtime_proxy(path=''):
 def booking_proxy(path=''):
     return forward_request(BOOKING_SERVICE_URL, request.path)
 
+@app.route('/api/payments', methods=['GET', 'POST'])
+@app.route('/api/payments/<path:path>', methods=['GET', 'PUT', 'DELETE'])
+def payment_proxy(path=''):
+    return forward_request(PAYMENT_SERVICE_URL, request.path)
+
 if __name__ == '__main__':
-    print("🚪 API Gateway running on port 5000...")
+    print("🚪 API Gateway (Secured) running on port 5000...")
     app.run(debug=True, port=5000)
