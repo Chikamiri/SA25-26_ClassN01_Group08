@@ -45,3 +45,8 @@
 - Implement `NotificationService`: Consumer service to listen for RabbitMQ events (Mock Email/Print logs).
 - Integrate RabbitMQ (Docker): Enable Event-Driven communication for `OrderPlacedEvent` and `InvoiceGenerated` events.
 - Update `run_app.py`: Register Payment and Notification services to the orchestration script.
+
+## 11/1/2026
+
+- Update gateway and notification
+- Patch some code errors in movie, booking and payment

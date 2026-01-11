@@ -3,12 +3,10 @@ import os
 from flask import Flask, request, jsonify
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
 from booking.business_logic.booking_service import BookingService
 
 app = Flask(__name__)
 booking_service = BookingService()
-
 
 @app.route('/api/bookings/seats/<showtime_id>', methods=['GET'])
 def get_seats(showtime_id):
@@ -25,7 +23,7 @@ def book_ticket():
         result = booking_service.book_ticket(
             showtime_id=data['showtime_id'],
             seat_number=data['seat_number'],
-            customer_name=data['customer_name']
+            email=data['email']
         )
         return jsonify(result), 201
     except ValueError as e:

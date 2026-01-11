@@ -42,6 +42,25 @@ def callback(ch, method, properties, body):
             print(f"   Movie:   {movie_name}")
             print("   Status:  SENT")
             print("----------------------------------------\n")
+
+        elif event_type == 'INVOICE_PRINT':
+            print("\n----------------------------------------")
+            print("[INFO] INVOICE GENERATED")
+            print(f"   To:       {data.get('customer')}")
+            print(f"   Amount:   {data.get('amount')} VND")
+            print(f"   Date:     {data.get('date')}")
+            print("   Status:   SENT TO PRINTER")
+            print("----------------------------------------\n")
+
+        elif event_type == 'SHOWTIME_CHANGED':
+            print("\n----------------------------------------")
+            print("[ALERT] SCHEDULE CHANGE NOTIFICATION")
+            print(f"   To:       {data.get('email')}")
+            print(f"   Message:  Your showtime for '{data.get('movie_title')}' has changed.")
+            print(f"   Old Time: {data.get('old_time')}")
+            print(f"   New Time: {data.get('new_time')}")
+            print("   -> Apology email sent.")
+            print("----------------------------------------\n")
         
         else:
             print(f"[INFO] Ignored event type: {event_type}")
@@ -56,9 +75,14 @@ def start_consumer():
     channel = connection.channel()
 
     channel.queue_declare(queue='ticket_events', durable=True)
-    channel.basic_consume(queue='ticket_events', on_message_callback=callback)
+    channel.queue_declare(queue='invoice_events', durable=True)
+    channel.queue_declare(queue='notification_events', durable=True)
 
-    print("[INFO] Notification Service is running & listening on 'ticket_events'...")
+    channel.basic_consume(queue='ticket_events', on_message_callback=callback)
+    channel.basic_consume(queue='invoice_events', on_message_callback=callback)
+    channel.basic_consume(queue='notification_events', on_message_callback=callback)
+
+    print("[INFO] Notification Service is running & listening...")
     channel.start_consuming()
 
 if __name__ == '__main__':

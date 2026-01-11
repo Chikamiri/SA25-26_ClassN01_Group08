@@ -119,9 +119,11 @@ class MovieService:
                 customers = response.json()
                 movie = self.movie_repo.get_movie(current_showtime.movie_id)
                 for cust in customers:
+                    customer_email = cust.get('email', 'Unknown Email')
+                    
                     event_data = {
                         "type": "SHOWTIME_CHANGED",
-                        "customer": cust['customer_name'],
+                        "email": customer_email,
                         "seat": cust['seat_number'],
                         "movie_title": movie.title,
                         "old_time": current_showtime.start_time,

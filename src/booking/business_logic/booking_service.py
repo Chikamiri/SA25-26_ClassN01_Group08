@@ -38,36 +38,30 @@ class BookingService:
     def get_movie_title_via_api(self, showtime_id):
         try:
             showtime_res = requests.get(f"{self.MOVIE_SERVICE_URL}/api/showtimes/{showtime_id}")
-            if showtime_res.status_code != 200:
-                return "Unknown Movie"
-            
+            if showtime_res.status_code != 200: return "Unknown Movie"
             movie_id = showtime_res.json().get('movie_id')
 
             movie_res = requests.get(f"{self.MOVIE_SERVICE_URL}/api/movies/{movie_id}")
-            if movie_res.status_code != 200:
-                return "Unknown Movie"
+            if movie_res.status_code != 200: return "Unknown Movie"
 
             return movie_res.json().get('title', 'Unknown Movie')
-
         except Exception as e:
             print(f"[WARNING] Could not fetch movie title: {e}")
             return "Unknown Movie (Service Error)"
 
-    def book_ticket(self, showtime_id, seat_number, customer_name):
+    def book_ticket(self, showtime_id, seat_number, email):
         status = self.repo.check_seat_availability(showtime_id, seat_number)
-        if status is None:
-            raise ValueError("Seat not found")
-        if status == 'booked':
-            raise ValueError(f"Seat {seat_number} is already booked")
+        if status is None: raise ValueError("Seat not found")
+        if status == 'booked': raise ValueError(f"Seat {seat_number} is already booked")
 
-        booking_id = self.repo.create_booking(showtime_id, seat_number, customer_name)
+        booking_id = self.repo.create_booking(showtime_id, seat_number, email)
         
         real_movie_name = self.get_movie_title_via_api(showtime_id)
 
         event_payload = {
             "type": "OrderPlacedEvent",
             "ticket_id": booking_id,
-            "email": customer_name,
+            "email": email,            
             "movie_name": real_movie_name
         }
         self.send_order_event(event_payload)
@@ -75,30 +69,16 @@ class BookingService:
         return {
             "message": "Booking successful",
             "ticket_id": booking_id,
-            "email": customer_name,
+            "email": email,
             "movie": real_movie_name
         }
 
-    def get_seats(self, showtime_id):
-        return self.repo.get_seats_by_showtime(showtime_id)
-
-    def get_all_bookings(self):
-        return self.repo.get_all_bookings()
-
-    def get_booking_details(self, booking_id):
-        booking = self.repo.get_booking_by_id(booking_id)
-        if not booking:
-            raise ValueError("Booking ID not found")
-        return booking
-
-    def delete_booking(self, booking_id):
+    def get_seats(self, showtime_id): return self.repo.get_seats_by_showtime(showtime_id)
+    def get_all_bookings(self): return self.repo.get_all_bookings()
+    def get_booking_details(self, booking_id): return self.repo.get_booking_by_id(booking_id)
+    def delete_booking(self, booking_id): 
         success = self.repo.delete_booking(booking_id)
-        if not success:
-            raise ValueError("Booking ID not found to delete")
+        if not success: raise ValueError("Booking ID not found")
         return {"message": "Booking cancelled", "id": booking_id}
-
-    def get_affected_customers(self, showtime_id):
-        return self.repo.get_customers_by_showtime(showtime_id)
-
-    def create_seats(self, showtime_id, total_seats):
-        self.repo.create_seats(showtime_id, total_seats)
+    def get_affected_customers(self, showtime_id): return self.repo.get_customers_by_showtime(showtime_id)
+    def create_seats(self, showtime_id, total_seats): self.repo.create_seats(showtime_id, total_seats)

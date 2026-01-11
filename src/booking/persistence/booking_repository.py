@@ -1,43 +1,140 @@
 import sqlite3
 import os
-from booking.models.booking_models import Seat
 
 class BookingRepository:
     def __init__(self):
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        self.db_path = os.path.join(current_dir, '..', 'db', 'booking.db')
+        self.db_path = os.path.join(os.path.dirname(__file__), '..', 'db', 'booking.db')
+        os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
+        self._init_db()
 
-        with sqlite3.connect(self.db_path) as conn:
-            conn.execute("""CREATE TABLE IF NOT EXISTS seats (
-                            id INTEGER PRIMARY KEY AUTOINCREMENT,
-                            showtime_id INTEGER NOT NULL,
-                            seat_number TEXT NOT NULL,
-                            status TEXT DEFAULT 'available')""")
+    def _get_connection(self):
+        return sqlite3.connect(self.db_path)
+
+    def _init_db(self):
+        conn = self._get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS bookings (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                showtime_id INTEGER NOT NULL,
+                seat_number TEXT NOT NULL,
+                email TEXT NOT NULL, 
+                status TEXT DEFAULT 'booked'
+            )
+        ''')
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS seats (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                showtime_id INTEGER NOT NULL,
+                seat_number TEXT NOT NULL,
+                status TEXT DEFAULT 'available',
+                UNIQUE(showtime_id, seat_number)
+            )
+        ''')
+        
+        conn.commit()
+        conn.close()
+
+    def check_seat_availability(self, showtime_id, seat_number):
+        conn = self._get_connection()
+        cursor = conn.cursor()
+        cursor.execute('SELECT status FROM seats WHERE showtime_id = ? AND seat_number = ?', (showtime_id, seat_number))
+        row = cursor.fetchone()
+        conn.close()
+        return row[0] if row else None
+
+    def create_booking(self, showtime_id, seat_number, email):
+        conn = self._get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute(
+            'UPDATE seats SET status = "booked" WHERE showtime_id = ? AND seat_number = ?', 
+            (showtime_id, seat_number)
+        )
+        
+        cursor.execute(
+            'INSERT INTO bookings (showtime_id, seat_number, email) VALUES (?, ?, ?)',
+            (showtime_id, seat_number, email)
+        )
+        booking_id = cursor.lastrowid
+        
+        conn.commit()
+        conn.close()
+        return booking_id
+
+    def get_booking_by_id(self, booking_id):
+        conn = self._get_connection()
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM bookings WHERE id = ?', (booking_id,))
+        row = cursor.fetchone()
+        conn.close()
+        if row:
+            return dict(row)
+        return None
+
+    def get_all_bookings(self):
+        conn = self._get_connection()
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM bookings')
+        rows = cursor.fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    def delete_booking(self, booking_id):
+        conn = self._get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('SELECT showtime_id, seat_number FROM bookings WHERE id = ?', (booking_id,))
+        row = cursor.fetchone()
+        
+        if row:
+            showtime_id, seat_number = row
+            cursor.execute('DELETE FROM bookings WHERE id = ?', (booking_id,))
+            cursor.execute(
+                'UPDATE seats SET status = "available" WHERE showtime_id = ? AND seat_number = ?', 
+                (showtime_id, seat_number)
+            )
+            conn.commit()
+            conn.close()
+            return True
+        
+        conn.close()
+        return False
 
     def create_seats(self, showtime_id, total_seats):
-        seats_data = [(showtime_id, f"Seat-{i+1}", "available") for i in range(total_seats)]
-        with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.cursor()
-            cursor.executemany("INSERT INTO seats (showtime_id, seat_number, status) VALUES (?, ?, ?)", seats_data)
+        conn = self._get_connection()
+        cursor = conn.cursor()
+        try:
+            for i in range(1, total_seats + 1):
+                seat_number = f"S{i}"
+                cursor.execute(
+                    'INSERT OR IGNORE INTO seats (showtime_id, seat_number) VALUES (?, ?)',
+                    (showtime_id, seat_number)
+                )
             conn.commit()
+        except Exception as e:
+            print(f"Error creating seats: {e}")
+        finally:
+            conn.close()
 
     def get_seats_by_showtime(self, showtime_id):
-        with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.cursor()
-            cursor.execute("SELECT * FROM seats WHERE showtime_id = ?", (showtime_id,))
-            rows = cursor.fetchall()
-            return [Seat(row[0], row[1], row[2], row[3]) for row in rows]
+        conn = self._get_connection()
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM seats WHERE showtime_id = ?', (showtime_id,))
+        rows = cursor.fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
 
-    def find_seat(self, showtime_id, seat_number):
-        with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.cursor()
-            cursor.execute("SELECT * FROM seats WHERE showtime_id = ? AND seat_number = ?", (showtime_id, seat_number))
-            row = cursor.fetchone()
-            return Seat(row[0], row[1], row[2], row[3]) if row else None
-
-    def update_seat_status(self, seat_id, new_status):
-        with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.cursor()
-            cursor.execute("UPDATE seats SET status = ? WHERE id = ?", (new_status, seat_id))
-            conn.commit()
-            return cursor.rowcount > 0
+    def get_customers_by_showtime(self, showtime_id):
+        conn = self._get_connection()
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute('SELECT email, seat_number FROM bookings WHERE showtime_id = ?', (showtime_id,))
+        rows = cursor.fetchall()
+        conn.close()
+        return [dict(r) for r in rows]

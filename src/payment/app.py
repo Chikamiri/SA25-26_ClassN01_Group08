@@ -20,7 +20,6 @@ def get_db_connection():
     db_folder = os.path.join(current_dir, 'db')
     db_path = os.path.join(db_folder, 'payments.db')
     os.makedirs(db_folder, exist_ok=True)
-    
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     return conn
@@ -32,7 +31,7 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             booking_id INTEGER NOT NULL,
             amount REAL NOT NULL,
-            customer_name TEXT,
+            email TEXT, 
             status TEXT DEFAULT 'PAID',
             created_at TEXT
         )
@@ -52,7 +51,6 @@ def send_invoice_event(invoice_data):
              
         channel = connection.channel()
         channel.queue_declare(queue='invoice_events', durable=True)
-        
         channel.basic_publish(
             exchange='',
             routing_key='invoice_events',
@@ -73,12 +71,12 @@ def create_payment():
     if not booking_id or not amount:
         return jsonify({"error": "Missing booking_id or amount"}), 400
 
-    customer_name = "Unknown"
+    email = "Unknown"
     try:
         response = requests.get(f"{BOOKING_SERVICE_URL}/api/bookings/{booking_id}")
         if response.status_code == 200:
             booking_info = response.json()
-            customer_name = booking_info.get('customer_name', 'Unknown')
+            email = booking_info.get('email', 'Unknown')
         else:
             return jsonify({"error": "Booking ID invalid or not found"}), 404
     except requests.exceptions.ConnectionError:
@@ -89,8 +87,8 @@ def create_payment():
     created_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
     cursor.execute(
-        "INSERT INTO invoices (booking_id, amount, customer_name, status, created_at) VALUES (?, ?, ?, ?, ?)",
-        (booking_id, amount, customer_name, 'PAID', created_at)
+        "INSERT INTO invoices (booking_id, amount, email, status, created_at) VALUES (?, ?, ?, ?, ?)",
+        (booking_id, amount, email, 'PAID', created_at)
     )
     invoice_id = cursor.lastrowid
     conn.commit()
@@ -100,7 +98,7 @@ def create_payment():
         "type": "INVOICE_PRINT",
         "invoice_id": invoice_id,
         "booking_id": booking_id,
-        "customer": customer_name,
+        "customer": email, 
         "amount": amount,
         "date": created_at
     }
@@ -109,7 +107,7 @@ def create_payment():
     return jsonify({
         "message": "Payment successful",
         "invoice_id": invoice_id,
-        "customer": customer_name,
+        "email": email,
         "amount": amount
     }), 201
 
