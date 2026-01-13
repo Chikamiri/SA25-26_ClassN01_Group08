@@ -31,6 +31,7 @@ class MovieRepository:
                 movie_id INTEGER NOT NULL,
                 start_time TEXT NOT NULL,
                 end_time TEXT NOT NULL,
+                price INTEGER DEFAULT 50000,
                 FOREIGN KEY(movie_id) REFERENCES movies(id)
             )
         ''')
@@ -98,33 +99,29 @@ class MovieRepository:
     def delete_movie(self, movie_id):
         conn = self._get_connection()
         cursor = conn.cursor()
-        cursor.execute('SELECT COUNT(*) FROM showtimes WHERE movie_id = ?', (movie_id,))
-        count = cursor.fetchone()[0]
-        if count > 0:
-            conn.close()
-            return False 
-            
+        
         cursor.execute('DELETE FROM movies WHERE id = ?', (movie_id,))
         rows_affected = cursor.rowcount
+        
         conn.commit()
         conn.close()
         return rows_affected > 0
 
 
-    def add_showtime(self, id, movie_id, start_time, end_time):
+    def add_showtime(self, id, movie_id, start_time, end_time, price):
         conn = self._get_connection()
         cursor = conn.cursor()
         
         if id is not None:
              cursor.execute(
-                'INSERT INTO showtimes (id, movie_id, start_time, end_time) VALUES (?, ?, ?, ?)',
-                (id, movie_id, start_time, end_time)
+                'INSERT INTO showtimes (id, movie_id, start_time, end_time, price) VALUES (?, ?, ?, ?, ?)',
+                (id, movie_id, start_time, end_time, price)
             )
              new_id = id
         else:
             cursor.execute(
-                'INSERT INTO showtimes (movie_id, start_time, end_time) VALUES (?, ?, ?)',
-                (movie_id, start_time, end_time)
+                'INSERT INTO showtimes (movie_id, start_time, end_time, price) VALUES (?, ?, ?, ?)',
+                (movie_id, start_time, end_time, price)
             )
             new_id = cursor.lastrowid
             
@@ -139,7 +136,8 @@ class MovieRepository:
         row = cursor.fetchone()
         conn.close()
         if row:
-            return Showtime(id=row[0], movie_id=row[1], start_time=row[2], end_time=row[3])
+            price = row[4] if len(row) > 4 else 50000
+            return Showtime(id=row[0], movie_id=row[1], start_time=row[2], end_time=row[3], price=price)
         return None
 
     def get_all_showtimes(self, movie_id=None):
@@ -151,11 +149,19 @@ class MovieRepository:
             cursor.execute('SELECT * FROM showtimes')
         rows = cursor.fetchall()
         conn.close()
-        return [Showtime(id=r[0], movie_id=r[1], start_time=r[2], end_time=r[3]) for r in rows]
+        
+        results = []
+        for r in rows:
+            price = r[4] if len(r) > 4 else 50000
+            results.append(Showtime(id=r[0], movie_id=r[1], start_time=r[2], end_time=r[3], price=price))
+        return results
 
-    def update_showtime(self, showtime_id, start_time, end_time):
+    def update_showtime(self, showtime_id, start_time, end_time, price):
         conn = self._get_connection()
-        conn.execute('UPDATE showtimes SET start_time = ?, end_time = ? WHERE id = ?', (start_time, end_time, showtime_id))
+        conn.execute(
+            'UPDATE showtimes SET start_time = ?, end_time = ?, price = ? WHERE id = ?', 
+            (start_time, end_time, price, showtime_id)
+        )
         conn.commit()
         conn.close()
 
@@ -167,3 +173,9 @@ class MovieRepository:
         conn.commit()
         conn.close()
         return rows_affected > 0
+
+    def delete_showtimes_by_movie_id(self, movie_id):
+        conn = self._get_connection()
+        conn.execute('DELETE FROM showtimes WHERE movie_id = ?', (movie_id,))
+        conn.commit()
+        conn.close()

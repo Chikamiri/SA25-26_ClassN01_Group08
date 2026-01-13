@@ -6,7 +6,6 @@ import time
 from dotenv import load_dotenv
 
 load_dotenv()
-
 RABBITMQ_URL = os.getenv('RABBITMQ_URL', 'amqp://guest:guest@localhost:5672/')
 
 def connect_rabbitmq():
@@ -30,23 +29,21 @@ def callback(ch, method, properties, body):
         event_type = data.get('type', 'UNKNOWN')
 
         if event_type == 'OrderPlacedEvent':
-            ticket_id = data.get('ticket_id')
-            email = data.get('email')
-            movie_name = data.get('movie_name')
-
             print("\n----------------------------------------")
-            print("[MOCK EMAIL SERVICE] Sending Ticket Confirmation")
+            print("[EMAIL SERVICE] Sending Ticket Confirmation")
             print(f"   Subject: Booking Confirmed!")
-            print(f"   To:      {email}")
-            print(f"   Ticket:  #{ticket_id}")
-            print(f"   Movie:   {movie_name}")
+            print(f"   To:      {data.get('email')}")
+            print(f"   Ticket:  #{data.get('ticket_id')}")
+            print(f"   Seat:    {data.get('seat')}")
+            print(f"   Movie:   {data.get('movie_name')}")
             print("   Status:  SENT")
             print("----------------------------------------\n")
 
         elif event_type == 'INVOICE_PRINT':
             print("\n----------------------------------------")
-            print("[INFO] INVOICE GENERATED")
-            print(f"   To:       {data.get('customer')}")
+            print("[PRINTER SERVICE] INVOICE GENERATED")
+            print(f"   Customer: {data.get('customer')}")
+            print(f"   Booking:  #{data.get('booking_id')}")
             print(f"   Amount:   {data.get('amount')} VND")
             print(f"   Date:     {data.get('date')}")
             print("   Status:   SENT TO PRINTER")
@@ -61,9 +58,19 @@ def callback(ch, method, properties, body):
             print(f"   New Time: {data.get('new_time')}")
             print("   -> Apology email sent.")
             print("----------------------------------------\n")
+
+        elif event_type == 'REFUND_NOTIFICATION':
+            print("\n----------------------------------------")
+            print("[ALERT] REFUND & APOLOGY EMAIL")
+            print(f"   To:       {data.get('email')}")
+            print(f"   Reason:   {data.get('reason')}")
+            print(f"   Seat:     {data.get('seat')}")
+            print(f"   Action:   REFUNDING {data.get('amount')} VND")
+            print("   Status:   Money has been returned to customer wallet.")
+            print("----------------------------------------\n")
         
         else:
-            print(f"[INFO] Ignored event type: {event_type}")
+            print(f"[INFO] Ignored unknown event type: {event_type}")
 
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
@@ -74,15 +81,14 @@ def start_consumer():
     connection = connect_rabbitmq()
     channel = connection.channel()
 
-    channel.queue_declare(queue='ticket_events', durable=True)
-    channel.queue_declare(queue='invoice_events', durable=True)
-    channel.queue_declare(queue='notification_events', durable=True)
-
+    channel.queue_declare(queue='ticket_events', durable=True)      
+    channel.queue_declare(queue='invoice_events', durable=True)      
+    channel.queue_declare(queue='notification_events', durable=True) 
     channel.basic_consume(queue='ticket_events', on_message_callback=callback)
     channel.basic_consume(queue='invoice_events', on_message_callback=callback)
     channel.basic_consume(queue='notification_events', on_message_callback=callback)
 
-    print("[INFO] Notification Service is running & listening...")
+    print("[INFO] Notification Service is running & listening on ALL queues...")
     channel.start_consuming()
 
 if __name__ == '__main__':

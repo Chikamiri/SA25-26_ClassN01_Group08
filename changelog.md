@@ -50,3 +50,10 @@
 
 - Update gateway and notification
 - Patch some code errors in movie, booking and payment
+
+## 13/1/2026
+
+- Add User folder
+- Implement admin/user login logic
+- Implement user register logic
+- Update Notification

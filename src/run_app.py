@@ -1,15 +1,15 @@
 import subprocess
 import time
 import os
-import signal
 import sys
 
 services = [
-    {"name": "Movie Service",       "cmd": ["python", "movie/app.py"],        "port": 5001},
-    {"name": "Booking Service",     "cmd": ["python", "booking/app.py"],      "port": 5002},
-    {"name": "Payment Service",     "cmd": ["python", "payment/app.py"],      "port": 5003},
-    {"name": "Notification Service","cmd": ["python", "notification/app.py"], "port": "N/A"},
-    {"name": "API Gateway",         "cmd": ["python", "gateway/app.py"],      "port": 5000},
+    {"name": "User Service",         "cmd": ["python", "user/app.py"],         "port": 5004},
+    {"name": "Movie Service",        "cmd": ["python", "movie/app.py"],        "port": 5001},
+    {"name": "Booking Service",      "cmd": ["python", "booking/app.py"],      "port": 5002},
+    {"name": "Payment Service",      "cmd": ["python", "payment/app.py"],      "port": 5003},
+    {"name": "Notification Service", "cmd": ["python", "notification/app.py"], "port": "N/A"},
+    {"name": "API Gateway",          "cmd": ["python", "gateway/app.py"],      "port": 5000},
 ]
 
 processes = []

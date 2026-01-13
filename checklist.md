@@ -85,12 +85,12 @@ Tài liệu theo dõi tiến độ thực hiện bài tập lớn, chuyển đ�
 ### Lab 7: Tích hợp RabbitMQ
 
 - [x] **Setup RabbitMQ:** Chạy bằng Docker hoặc cài trực tiếp.
-- [ ] **Booking Service (Producer):**
-  - [ ] Khi đặt vé thành công -> Gửi message `OrderPlacedEvent` vào hàng đợi (Queue).
-  - [ ] Message chứa: `ticket_id`, `email`, `movie_name`.
-- [ ] **Notification Service (Consumer):**
-  - [ ] Lắng nghe hàng đợi `ticket_events`.
-  - [ ] Nhận message -> Giả lập in vé gửi email (print log ra màn hình).
+- [x] **Booking Service (Producer):**
+  - [x] Khi đặt vé thành công -> Gửi message `OrderPlacedEvent` vào hàng đợi (Queue).
+  - [x] Message chứa: `ticket_id`, `email`, `movie_name`.
+- [x] **Notification Service (Consumer):**
+  - [x] Lắng nghe hàng đợi `ticket_events`.
+  - [x] Nhận message -> Giả lập in vé gửi email (print log ra màn hình).
   - [ ] Đảm bảo Booking Service không bị treo khi chờ gửi email.
 
 ## Giai đoạn 5: Hoàn thiện & Triển khai
