@@ -4,7 +4,8 @@ from movie.models.movie_model import Movie, Showtime
 
 class MovieRepository:
     def __init__(self):
-        self.db_path = os.path.join(os.path.dirname(__file__), '..', 'db', 'movies.db')
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        self.db_path = os.path.join(base_dir, '..', 'db', 'movies.db')
         os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
         self._init_db()
 

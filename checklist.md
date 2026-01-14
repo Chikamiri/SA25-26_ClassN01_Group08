@@ -91,7 +91,7 @@ Tài liệu theo dõi tiến độ thực hiện bài tập lớn, chuyển đ�
 - [x] **Notification Service (Consumer):**
   - [x] Lắng nghe hàng đợi `ticket_events`.
   - [x] Nhận message -> Giả lập in vé gửi email (print log ra màn hình).
-  - [ ] Đảm bảo Booking Service không bị treo khi chờ gửi email.
+  - [ ] Đảm bảo Booking Service không bị treo khi chờ gửi email. --> Cân nhắc, có thể ko cần
 
 ## Giai đoạn 5: Hoàn thiện & Triển khai
 

@@ -57,3 +57,9 @@
 - Implement admin/user login logic
 - Implement user register logic
 - Update Notification
+
+## 14/1/2026
+- Create issue report file
+- Fix issue related to how process stop in Linux
+- Modify database path resolution
+- Update test file to match with new code

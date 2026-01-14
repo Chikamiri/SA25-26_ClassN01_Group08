@@ -3,7 +3,8 @@ import os
 
 class BookingRepository:
     def __init__(self):
-        self.db_folder = os.path.join(os.path.dirname(__file__), '..', 'db')
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        self.db_folder = os.path.join(base_dir, '..', 'db')
         if not os.path.exists(self.db_folder):
             os.makedirs(self.db_folder)
         self.db_path = os.path.join(self.db_folder, 'booking.db')
