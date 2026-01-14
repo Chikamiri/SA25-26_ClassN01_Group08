@@ -58,8 +58,11 @@
 - Implement user register logic
 - Update Notification
 
-## 14/1/2026
+## 14/1/2026, 16:48
 - Create issue report file
 - Fix issue related to how process stop in Linux
 - Modify database path resolution
 - Update test file to match with new code
+
+## 14/1/2026, 17:40
+- Add more tests
