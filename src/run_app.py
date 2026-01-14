@@ -22,7 +22,10 @@ def start_services():
 
     for service in services:
         print(f"   - Starting {service['name']}...")
-        p = subprocess.Popen(service["cmd"], shell=True, cwd=cwd)
+        cmd = service["cmd"][:]
+        if cmd[0] == "python":
+            cmd[0] = sys.executable
+        p = subprocess.Popen(cmd, cwd=cwd)
         processes.append(p)
         time.sleep(1) 
 
@@ -35,7 +38,8 @@ def stop_services():
     print("\n\nStopping the system...")
     for p in processes:
         try:
-            subprocess.call(['taskkill', '/F', '/T', '/PID', str(p.pid)])
+            p.terminate()
+            p.wait()
         except Exception:
             pass
     print("Exiting...")

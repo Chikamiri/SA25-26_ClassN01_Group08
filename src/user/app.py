@@ -7,7 +7,8 @@ from flask import Flask, request, jsonify
 app = Flask(__name__)
 
 def get_db_connection():
-    db_folder = os.path.join(os.path.dirname(__file__), 'db')
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    db_folder = os.path.join(base_dir, 'db')
     if not os.path.exists(db_folder):
         os.makedirs(db_folder)
     
