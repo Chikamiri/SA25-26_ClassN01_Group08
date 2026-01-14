@@ -307,6 +307,3 @@ class TestMovieRepository(unittest.TestCase):
         self.mock_cursor.execute.assert_called_once_with('DELETE FROM showtimes WHERE id = ?', (1,))
         self.mock_conn.commit.assert_called_once()
         self.mock_conn.close.assert_called_once()
-
-if __name__ == '__main__':
-    unittest.main()
