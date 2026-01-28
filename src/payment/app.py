@@ -11,11 +11,14 @@ load_dotenv()
 app = Flask(__name__)
 
 BOOKING_SERVICE_URL = os.getenv("BOOKING_SERVICE_URL", "http://127.0.0.1:5002")
-RABBITMQ_URL = os.getenv('RABBITMQ_URL', 'amqp://guest:guest@localhost:5672/')
+RABBITMQ_HOST = os.getenv("RABBITMQ_HOST", "localhost")
+RABBITMQ_URL = os.getenv('RABBITMQ_URL', f'amqp://guest:guest@{RABBITMQ_HOST}:5672/')
 
 def send_invoice_event(invoice_data):
     try:
-        if 'localhost' in RABBITMQ_URL:
+        if RABBITMQ_HOST != 'localhost':
+             params = pika.ConnectionParameters(host=RABBITMQ_HOST, port=5672)
+        elif 'localhost' in RABBITMQ_URL:
              params = pika.ConnectionParameters(host='localhost', port=5672)
         else:
              params = pika.URLParameters(RABBITMQ_URL)

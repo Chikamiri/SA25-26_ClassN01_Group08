@@ -5,6 +5,8 @@ import MoviesPage from './pages/MoviesPage.js';
 import MovieDetailsPage from './pages/MovieDetailsPage.js';
 import AdminLoginPage from './pages/AdminLoginPage.js';
 import AdminDashboardPage from './pages/AdminDashboardPage.js';
+import AdminMoviesPage from './pages/AdminMoviesPage.js';
+import AdminShowtimesPage from './pages/AdminShowtimesPage.js';
 import BookingsPage from './pages/BookingsPage.js';
 import MyBookingsPage from './pages/MyBookingsPage.js';
 import './index.css';
@@ -26,6 +28,8 @@ const routes = {
     '/login': LoginPage,
     '/admin/login': AdminLoginPage,
     '/admin/dashboard': AdminDashboardPage,
+    '/admin/movies/manage': AdminMoviesPage,
+    '/admin/showtimes/manage': AdminShowtimesPage,
     '/movies': MoviesPage,
     '/movies/:id': MovieDetailsPage,
     '/book/:id': BookingsPage,

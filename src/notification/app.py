@@ -6,16 +6,21 @@ import time
 from dotenv import load_dotenv
 
 load_dotenv()
-RABBITMQ_URL = os.getenv('RABBITMQ_URL', 'amqp://guest:guest@localhost:5672/')
+RABBITMQ_HOST = os.getenv('RABBITMQ_HOST', 'localhost')
+RABBITMQ_URL = os.getenv('RABBITMQ_URL', f'amqp://guest:guest@{RABBITMQ_HOST}:5672/')
 
 def connect_rabbitmq():
     while True:
         try:
-            print("[INFO] Connecting to RabbitMQ...")
-            if 'localhost' in RABBITMQ_URL:
+            print(f"[INFO] Connecting to RabbitMQ at {RABBITMQ_HOST}...")
+            
+            if RABBITMQ_HOST != 'localhost':
+                 params = pika.ConnectionParameters(host=RABBITMQ_HOST, port=5672)
+            elif 'localhost' in RABBITMQ_URL:
                  params = pika.ConnectionParameters(host='localhost', port=5672)
             else:
                  params = pika.URLParameters(RABBITMQ_URL)
+            
             connection = pika.BlockingConnection(params)
             print("[INFO] Successfully connected to RabbitMQ!")
             return connection

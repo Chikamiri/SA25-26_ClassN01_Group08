@@ -12,7 +12,8 @@ class MovieService:
     def __init__(self):
         self.movie_repo = MovieRepository()
         self.BOOKING_SERVICE_URL = os.getenv("BOOKING_SERVICE_URL", "http://127.0.0.1:5002")
-        self.RABBITMQ_URL = os.getenv('RABBITMQ_URL', 'amqp://guest:guest@localhost:5672/')
+        self.RABBITMQ_HOST = os.getenv("RABBITMQ_HOST", "localhost")
+        self.RABBITMQ_URL = os.getenv('RABBITMQ_URL', f'amqp://guest:guest@{self.RABBITMQ_HOST}:5672/')
 
     def validate_showtime_duration(self, movie_id, start_time_str, end_time_str):
         movie = self.movie_repo.get_movie(movie_id)
@@ -37,7 +38,9 @@ class MovieService:
 
     def send_notification_event(self, message_data):
         try:
-            if 'localhost' in self.RABBITMQ_URL:
+            if self.RABBITMQ_HOST != 'localhost':
+                 params = pika.ConnectionParameters(host=self.RABBITMQ_HOST, port=5672)
+            elif 'localhost' in self.RABBITMQ_URL:
                  params = pika.ConnectionParameters(host='localhost', port=5672)
             else:
                  params = pika.URLParameters(self.RABBITMQ_URL)

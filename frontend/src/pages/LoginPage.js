@@ -36,7 +36,7 @@ const LoginPage = {
       errorMsg.innerText = '';
 
       try {
-        const response = await loginUser({ email, password });
+        const response = await loginUser({ username: email, password });
         localStorage.setItem('user', JSON.stringify(response));
         alert('Đăng nhập thành công!');
         window.location.href = '/'; // Redirect về trang chủ

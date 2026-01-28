@@ -11,7 +11,7 @@ app = Flask(__name__)
 MOVIE_SERVICE_URL = os.getenv('MOVIE_SERVICE_URL', 'http://127.0.0.1:5001')
 BOOKING_SERVICE_URL = os.getenv('BOOKING_SERVICE_URL', 'http://127.0.0.1:5002')
 PAYMENT_SERVICE_URL = os.getenv('PAYMENT_SERVICE_URL', 'http://127.0.0.1:5003')
-USER_SERVICE_URL = "http://127.0.0.1:5004"
+USER_SERVICE_URL = os.getenv('USER_SERVICE_URL', 'http://127.0.0.1:5004')
 VALID_API_KEY = os.getenv('API_KEY_VALUE', 'BO_CHIKA')
 API_KEY_NAME = os.getenv('API_KEY_NAME', 'peko-key')
 

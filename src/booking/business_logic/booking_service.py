@@ -11,11 +11,14 @@ class BookingService:
     def __init__(self):
         self.booking_repo = BookingRepository()
         self.MOVIE_SERVICE_URL = os.getenv("MOVIE_SERVICE_URL", "http://127.0.0.1:5001")
-        self.RABBITMQ_URL = os.getenv("RABBITMQ_URL", "amqp://guest:guest@localhost:5672/")
+        self.RABBITMQ_HOST = os.getenv("RABBITMQ_HOST", "localhost")
+        self.RABBITMQ_URL = os.getenv("RABBITMQ_URL", f"amqp://guest:guest@{self.RABBITMQ_HOST}:5672/")
 
     def send_ticket_email(self, booking_id, email, seat_number, movie_title):
         try:
-            if 'localhost' in self.RABBITMQ_URL:
+            if self.RABBITMQ_HOST != 'localhost':
+                 params = pika.ConnectionParameters(host=self.RABBITMQ_HOST, port=5672)
+            elif 'localhost' in self.RABBITMQ_URL:
                  params = pika.ConnectionParameters('localhost')
             else:
                  params = pika.URLParameters(self.RABBITMQ_URL)

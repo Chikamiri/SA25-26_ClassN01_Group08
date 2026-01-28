@@ -66,3 +66,10 @@
 
 ## 14/1/2026, 17:40
 - Add more tests
+
+## 28/1/2026
+- Fix frontend login bug (mismatched 'email' vs 'username' keys)
+- Fix missing Admin management routes in frontend router
+- Create AdminMoviesPage and AdminShowtimesPage for movie/showtime management
+- Update `issues_report.md` with current frontend status
+- Update `checklist.md` to reflect project completion status (Lab 8)

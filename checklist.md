@@ -30,9 +30,9 @@ Tài liệu theo dõi tiến độ thực hiện bài tập lớn, chuyển đ�
 - [x] **Setup Project Python Flask:**
   - [x] Cấu trúc thư mục: `presentation/`, `business_logic/`, `persistence/`.
   - [x] Cài đặt môi trường ảo (venv) và thư viện Flask.
-- [ ] **Database & Models:**
+- [x] **Database & Models:**
   - [x] Tạo Class `Movie` (id, title, genre, duration, release_date).
-  - [ ] Tạo `MovieRepository`: Kết nối DB, xử lý query (SQL/ORM).
+  - [x] Tạo `MovieRepository`: Kết nối DB, xử lý query (SQL/ORM).
 - [x] **Business Logic:**
   - [x] Tạo `MovieService`: Validate dữ liệu (ví dụ: phim phải có tên, thời lượng > 0).
 - [x] **API Endpoints (Presentation):**
@@ -52,7 +52,7 @@ Tài liệu theo dõi tiến độ thực hiện bài tập lớn, chuyển đ�
   - [x] **Booking Service:** Quản lý đặt vé, chọn ghế (Core nghiệp vụ).
   - [x] **Notification Service:** Gửi vé điện tử, email xác nhận.
 - [x] **Thiết kế API Contract (Đặc tả API):**
-  - [ ] Định nghĩa input/output JSON cho từng service.
+  - [x] Định nghĩa input/output JSON cho từng service.
 - [x] **Vẽ sơ đồ C4 Model (Level 1 - System Context):**
   - [x] Thể hiện Web App, Admin, Payment Gateway và Hệ thống đặt vé.
 
@@ -91,7 +91,7 @@ Tài liệu theo dõi tiến độ thực hiện bài tập lớn, chuyển đ�
 - [x] **Notification Service (Consumer):**
   - [x] Lắng nghe hàng đợi `ticket_events`.
   - [x] Nhận message -> Giả lập in vé gửi email (print log ra màn hình).
-  - [ ] Đảm bảo Booking Service không bị treo khi chờ gửi email. --> Cân nhắc, có thể ko cần
+  - [x] Đảm bảo Booking Service không bị treo khi chờ gửi email.
 
 ## Giai đoạn 5: Hoàn thiện & Triển khai
 
@@ -102,9 +102,9 @@ Tài liệu theo dõi tiến độ thực hiện bài tập lớn, chuyển đ�
 - [ ] **Deployment Diagram:**
   - [ ] Vẽ sơ đồ triển khai: Client -> Load Balancer -> API Gateway -> Services -> Databases.
   - [ ] Thể hiện rõ mỗi service có DB riêng.
-- [ ] **Dockerize (Optional nhưng nên làm):**
-  - [ ] Viết `Dockerfile` cho từng service.
-  - [ ] Viết `docker-compose.yml` để chạy toàn bộ hệ thống bằng 1 lệnh.
+- [x] **Dockerize (Optional nhưng nên làm):**
+  - [x] Viết `Dockerfile` for từng service.
+  - [x] Viết `docker-compose.yml` để chạy toàn bộ hệ thống bằng 1 lệnh.
 - [ ] **Phân tích ATAM:**
   - [ ] Đánh giá lại ASRs (Scalability, Availability) đã nêu ở Lab 1.
   - [ ] So sánh kiến trúc Monolith (Giai đoạn 1) vs Microservices (Giai đoạn hiện tại).
