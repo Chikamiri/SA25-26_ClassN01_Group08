@@ -11,6 +11,7 @@ export async function request(endpoint, options = {}) {
 
   const headers = {
     'Content-Type': 'application/json',
+    'peko-key': 'BO_CHIKA',
     ...(options.headers || {}),
   };
 
@@ -29,19 +30,18 @@ export async function request(endpoint, options = {}) {
     const response = await fetch(url, { ...options, headers });
 
     if (!response.ok) {
-      // Xử lý các lỗi HTTP (ví dụ: 401, 404, 500)
-      // Cố gắng parse JSON error, nếu không thành công thì dùng message mặc định
+      // Xử lý các lỗi HTTP
       let errorData;
       try {
         errorData = await response.json();
       } catch (parseError) {
-        errorData = { error: 'Unknown error' };
+        errorData = { error: 'Unknown server error' };
       }
-      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      
+      const errorMessage = errorData.error || `Error ${response.status}: ${response.statusText}`;
+      throw new Error(errorMessage);
     }
 
-    // Trả về dữ liệu JSON nếu phản hồi thành công
-    // Cần kiểm tra nếu response có thể rỗng (ví dụ: 204 No Content)
     if (response.status === 204) {
       return null;
     }
@@ -49,7 +49,13 @@ export async function request(endpoint, options = {}) {
 
   } catch (error) {
     console.error('API request failed:', error);
-    throw error; // Re-throw error để component gọi có thể xử lý
+    
+    // Phân biệt lỗi Network (Fetch Error) với lỗi từ Server trả về
+    if (error.name === 'TypeError' && error.message === 'Failed to fetch') {
+      throw new Error('Cannot connect to Server (Gateway is down or Network error)');
+    }
+    
+    throw error;
   }
 }
 

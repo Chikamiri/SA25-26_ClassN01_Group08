@@ -15,12 +15,33 @@ USER_SERVICE_URL = os.getenv('USER_SERVICE_URL', 'http://127.0.0.1:5004')
 VALID_API_KEY = os.getenv('API_KEY_VALUE', 'BO_CHIKA')
 API_KEY_NAME = os.getenv('API_KEY_NAME', 'peko-key')
 
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,peko-key,X-User-Email')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    return response
+
 @app.before_request
 def check_api_key():
     if request.method == 'OPTIONS': return
     client_key = request.headers.get(API_KEY_NAME)
     if client_key != VALID_API_KEY:
         return jsonify({"error": f"Missing or Invalid Header: {API_KEY_NAME}"}), 401
+
+def public_forward(service_url, path):
+    try:
+        url = f"{service_url}{path}"
+        resp = requests.request(
+            method=request.method,
+            url=url,
+            headers={key: value for (key, value) in request.headers if key != 'Host'},
+            data=request.get_data(),
+            params=request.args
+        )
+        return Response(resp.content, resp.status_code, dict(resp.headers))
+    except Exception as e:
+        return jsonify({"error": f"Gateway Error: {str(e)}"}), 500
 
 def validate_and_forward(service_url, path, required_role=None):
     auth_header = request.headers.get('Authorization')
@@ -76,25 +97,25 @@ def auth_proxy(path):
 def handle_movies_list():
     if request.method == 'POST':
         return validate_and_forward(MOVIE_SERVICE_URL, request.path, required_role='admin')
-    return validate_and_forward(MOVIE_SERVICE_URL, request.path)
+    return public_forward(MOVIE_SERVICE_URL, request.path)
 
 @app.route('/api/movies/<path:path>', methods=['GET', 'PUT', 'DELETE'])
 def handle_movie_detail(path):
     if request.method in ['PUT', 'DELETE']:
         return validate_and_forward(MOVIE_SERVICE_URL, request.path, required_role='admin')
-    return validate_and_forward(MOVIE_SERVICE_URL, request.path)
+    return public_forward(MOVIE_SERVICE_URL, request.path)
 
 @app.route('/api/showtimes', methods=['GET', 'POST'])
 def handle_showtimes_list():
     if request.method == 'POST':
         return validate_and_forward(MOVIE_SERVICE_URL, request.path, required_role='admin')
-    return validate_and_forward(MOVIE_SERVICE_URL, request.path)
+    return public_forward(MOVIE_SERVICE_URL, request.path)
 
 @app.route('/api/showtimes/<path:path>', methods=['GET', 'PUT', 'DELETE'])
 def handle_showtime_detail(path):
     if request.method in ['PUT', 'DELETE']:
         return validate_and_forward(MOVIE_SERVICE_URL, request.path, required_role='admin')
-    return validate_and_forward(MOVIE_SERVICE_URL, request.path)
+    return public_forward(MOVIE_SERVICE_URL, request.path)
 
 @app.route('/api/bookings', methods=['GET', 'POST'])
 def handle_bookings():
@@ -110,4 +131,4 @@ def handle_payments():
 
 if __name__ == '__main__':
     print("API Gateway running on port 5000...")
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=5000, host='0.0.0.0')

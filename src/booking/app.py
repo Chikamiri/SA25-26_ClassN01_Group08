@@ -59,4 +59,4 @@ def get_customers_by_showtime(showtime_id):
 
 if __name__ == '__main__':
     print("Booking Service running on port 5002...")
-    app.run(debug=True, port=5002)
+    app.run(debug=True, port=5002, host='0.0.0.0')

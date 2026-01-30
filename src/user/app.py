@@ -3,6 +3,7 @@ import uuid
 import datetime
 import os
 from flask import Flask, request, jsonify
+from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 
@@ -25,6 +26,15 @@ def init_db():
             password TEXT NOT NULL
         )
     ''')
+    
+    # Migration: Check for role column
+    cursor = conn.cursor()
+    cursor.execute("PRAGMA table_info(users)")
+    columns = [info[1] for info in cursor.fetchall()]
+    if 'role' not in columns:
+        print("[User Service] Migrating: Adding 'role' column to users table...")
+        conn.execute("ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'customer'")
+
     conn.execute('''
         CREATE TABLE IF NOT EXISTS tokens (
             token TEXT PRIMARY KEY,
@@ -48,9 +58,11 @@ def register():
     if not email or not password:
         return jsonify({"error": "Email and password required"}), 400
 
+    hashed_password = generate_password_hash(password)
+
     try:
         conn = get_db_connection()
-        conn.execute('INSERT INTO users (email, password) VALUES (?, ?)', (email, password))
+        conn.execute('INSERT INTO users (email, password) VALUES (?, ?)', (email, hashed_password))
         conn.commit()
         conn.close()
         return jsonify({"message": "User registered successfully"}), 201
@@ -63,23 +75,21 @@ def login():
     username = data.get('username')
     password = data.get('password')
 
-    user_role = "customer"
-    user_email = username
-
-    if username == "admin" and password == "111111":
-        user_role = "admin"
-        user_email = "admin@system.com"
+    conn = get_db_connection()
+    # Kiểm tra email hoặc nếu username là 'admin' thì ánh xạ tới admin@system.com
+    target_email = username
+    if username == "admin":
+        target_email = "admin@system.com"
+        
+    user = conn.execute('SELECT * FROM users WHERE email = ?', (target_email,)).fetchone()
     
-    else:
-        conn = get_db_connection()
-        user = conn.execute('SELECT * FROM users WHERE email = ? AND password = ?', (username, password)).fetchone()
+    if not user or not check_password_hash(user['password'], password):
         conn.close()
-        
-        if not user:
-            return jsonify({"error": "Invalid credentials"}), 401
-        
-        user_role = "customer"
-        user_email = user['email']
+        return jsonify({"error": "Invalid credentials"}), 401
+    
+    user_role = user['role']
+    user_email = user['email']
+    conn.close()
 
     token = str(uuid.uuid4()) 
 
@@ -113,4 +123,4 @@ def verify_token():
 
 if __name__ == '__main__':
     print("User Service (Auth) running on port 5004...")
-    app.run(debug=True, port=5004)
+    app.run(debug=True, port=5004, host='0.0.0.0')

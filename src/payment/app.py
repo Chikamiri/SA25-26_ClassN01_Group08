@@ -76,7 +76,7 @@ def process_payment():
     except Exception as e:
         return jsonify({"error": f"Internal Error: {str(e)}"}), 500
 
-    print(f"💰 Processing payment of {amount} VND for Booking #{booking_id} (User: {email})")
+    print(f"Processing payment of {amount} VND for Booking #{booking_id} (User: {email})")
 
     invoice_data = {
         "customer": email,
@@ -103,4 +103,4 @@ def process_payment():
 
 if __name__ == '__main__':
     print("Payment Service running on port 5003...")
-    app.run(debug=True, port=5003)
+    app.run(debug=True, port=5003, host='0.0.0.0')
