@@ -38,17 +38,31 @@ const routes = {
 
 const router = async () => {
     const content = document.getElementById('root');
-    const request = parseUrl();
+    let path = window.location.pathname.toLowerCase() || '/';
     
-    // Xây dựng parsed URL để match với routes object
-    // Nếu request.resource tồn tại thì là /resource
-    // Nếu có id thì là /resource/:id
-    const parsedUrl = (request.resource ? `/${request.resource}` : '/') + 
-                      (request.id ? '/:id' : '') + 
-                      (request.verb ? `/${request.verb}` : '');
+    // Loại bỏ trailing slash nếu có (trừ khi là root /)
+    if (path.length > 1 && path.endsWith('/')) {
+        path = path.slice(0, -1);
+    }
     
-    // Tìm page
-    const page = routes[parsedUrl] ? routes[parsedUrl] : HomePage;
+    let page = routes[path];
+
+    if (!page) {
+        // Nếu không tìm thấy exact match, thử tìm match kiểu :id
+        // Giả sử chỉ hỗ trợ cấu trúc /resource/:id
+        const r = path.split("/");
+        // path: /resource/id -> resource: r[1], id: r[2]
+        
+        if (r.length >= 3) {
+            const parsedUrl = `/${r[1]}/:id`;
+            page = routes[parsedUrl];
+        }
+        
+        // Vẫn chưa tìm thấy?
+        if (!page) {
+             page = HomePage;
+        }
+    }
 
     // Render Header
     const headerHTML = Header.render();

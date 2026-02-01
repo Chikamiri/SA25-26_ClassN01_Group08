@@ -8,17 +8,17 @@ const AdminLoginPage = {
         <p>Chỉ dành cho quản trị viên.</p>
         <form id="admin-login-form">
           <div>
-            <label>Email:</label><br />
-            <input type="email" id="admin-email" placeholder="admin@example.com" required style="padding: 5px;">
+            <label>Email (hoặc username "admin"):</label><br />
+            <input type="text" id="admin-email" placeholder="admin" required style="padding: 5px;">
           </div>
           <div style="margin-top: 10px;">
             <label>Mật khẩu:</label><br />
-            <input type="password" id="admin-password" placeholder="admin123" required style="padding: 5px;">
+            <input type="password" id="admin-password" placeholder="111111" required style="padding: 5px;">
           </div>
           <button type="submit" id="admin-login-btn" style="margin-top: 20px; padding: 10px 15px;">Đăng nhập Admin</button>
         </form>
         <p id="admin-error-msg" style="color: red; margin-top: 15px;"></p>
-        <p style="margin-top: 10px;">Tài khoản thử nghiệm: admin@example.com / admin123</p>
+        <p style="margin-top: 10px;">Tài khoản mặc định: <b>admin</b> / <b>111111</b></p>
       </div>
     `;
   },
@@ -36,7 +36,9 @@ const AdminLoginPage = {
       errorMsg.innerText = '';
 
       try {
-        const response = await loginUser({ email, password });
+        // Backend yêu cầu field 'username', nhưng form nhập là email.
+        // Map email input vào field username của payload.
+        const response = await loginUser({ username: email, password });
         
         if (response.role === 'admin') {
             localStorage.setItem('user', JSON.stringify(response));

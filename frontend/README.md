@@ -1,6 +1,6 @@
 # Movie Booking System - Frontend
 
-Dự án Frontend được xây dựng bằng React + Vite. Để hệ thống hoạt động đầy đủ, cần có các dịch vụ Backend và API Gateway chạy song song.
+Dự án Frontend được xây dựng bằng **Vanilla JS (JavaScript thuần)** kết hợp với **Vite** để tối ưu hóa việc phát triển. Hệ thống sử dụng một Router tự chế đơn giản để quản lý các trang.
 
 ## 🚀 Khởi động nhanh (Sử dụng Docker - Khuyên dùng)
 
@@ -29,9 +29,7 @@ Nếu bạn muốn chạy riêng Frontend để chỉnh sửa giao diện:
    ```bash
    npm run dev
    ```
-4. **Lưu ý quan trọng:** Để tính năng Đăng nhập và Đặt vé hoạt động, bạn phải đảm bảo các dịch vụ sau đang chạy:
-   - **API Gateway:** Port 5000 (`src/gateway/app.py`)
-   - **User Service:** Port 5004 (`src/user/app.py`)
+4. **Lưu ý quan trọng:** Để các tính năng (Đăng nhập, Đặt vé, Quản trị) hoạt động, bạn phải đảm bảo **API Gateway** đang chạy trên Port **5000**.
 
 ## 🔐 Tài khoản dùng thử
 

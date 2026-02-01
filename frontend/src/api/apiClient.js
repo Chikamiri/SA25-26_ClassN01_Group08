@@ -99,4 +99,46 @@ export async function bookTicket(bookingData) {
   });
 }
 
-// TODO: Thêm các hàm API cho Admin nếu cần (POST, PUT, DELETE cho phim, suất chiếu)
+// --- Các hàm API cho Admin (Movies) ---
+
+export async function createMovie(movieData) {
+  return request('movies', {
+    method: 'POST',
+    body: JSON.stringify(movieData),
+  });
+}
+
+export async function updateMovie(id, movieData) {
+  return request(`movies/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(movieData),
+  });
+}
+
+export async function deleteMovie(id) {
+  return request(`movies/${id}`, {
+    method: 'DELETE',
+  });
+}
+
+// --- Các hàm API cho Admin (Showtimes) ---
+
+export async function createShowtime(showtimeData) {
+  return request('showtimes', {
+    method: 'POST',
+    body: JSON.stringify(showtimeData),
+  });
+}
+
+export async function updateShowtime(id, showtimeData) {
+  return request(`showtimes/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(showtimeData),
+  });
+}
+
+export async function deleteShowtime(id) {
+  return request(`showtimes/${id}`, {
+    method: 'DELETE',
+  });
+}
