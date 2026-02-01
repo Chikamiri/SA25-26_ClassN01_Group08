@@ -1,134 +1,130 @@
-import sys
 import os
 import requests
 from flask import Flask, request, jsonify, Response
 from dotenv import load_dotenv
 
 load_dotenv()
-
 app = Flask(__name__)
 
-MOVIE_SERVICE_URL = os.getenv('MOVIE_SERVICE_URL', 'http://127.0.0.1:5001')
-BOOKING_SERVICE_URL = os.getenv('BOOKING_SERVICE_URL', 'http://127.0.0.1:5002')
-PAYMENT_SERVICE_URL = os.getenv('PAYMENT_SERVICE_URL', 'http://127.0.0.1:5003')
-USER_SERVICE_URL = os.getenv('USER_SERVICE_URL', 'http://127.0.0.1:5004')
+MOVIE_SERVICE_URL = os.getenv('MOVIE_SERVICE_URL', 'http://movie_service:5001')
+BOOKING_SERVICE_URL = os.getenv('BOOKING_SERVICE_URL', 'http://booking_service:5002')
+PAYMENT_SERVICE_URL = os.getenv('PAYMENT_SERVICE_URL', 'http://payment_service:5003')
+USER_SERVICE_URL = os.getenv('USER_SERVICE_URL', 'http://user_service:5004')
 VALID_API_KEY = os.getenv('API_KEY_VALUE', 'BO_CHIKA')
 API_KEY_NAME = os.getenv('API_KEY_NAME', 'peko-key')
 
+# ---------- CORS ----------
 @app.after_request
 def after_request(response):
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,peko-key,X-User-Email')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization,peko-key,X-User-Email,X-User-Role'
+    response.headers['Access-Control-Allow-Methods'] = 'GET,PUT,POST,DELETE,OPTIONS'
     return response
 
+@app.route('/api/<path:path>', methods=['OPTIONS'])
+def options_handler(path):
+    return '', 200
+
+# ---------- API KEY CHECK ----------
 @app.before_request
 def check_api_key():
-    if request.method == 'OPTIONS': return
+    if request.method == 'OPTIONS':
+        return
     client_key = request.headers.get(API_KEY_NAME)
     if client_key != VALID_API_KEY:
         return jsonify({"error": f"Missing or Invalid Header: {API_KEY_NAME}"}), 401
 
+# ---------- FORWARD HELPERS ----------
 def public_forward(service_url, path):
-    try:
-        url = f"{service_url}{path}"
-        resp = requests.request(
-            method=request.method,
-            url=url,
-            headers={key: value for (key, value) in request.headers if key != 'Host'},
-            data=request.get_data(),
-            params=request.args
-        )
-        return Response(resp.content, resp.status_code, dict(resp.headers))
-    except Exception as e:
-        return jsonify({"error": f"Gateway Error: {str(e)}"}), 500
+    url = f"{service_url}{path}"
+    resp = requests.request(
+        method=request.method,
+        url=url,
+        headers={k: v for k, v in request.headers if k != 'Host'},
+        data=request.get_data(),
+        params=request.args
+    )
+    return Response(resp.content, resp.status_code, dict(resp.headers))
 
 def validate_and_forward(service_url, path, required_role=None):
     auth_header = request.headers.get('Authorization')
     if not auth_header:
         return jsonify({"error": "Missing Authorization Token"}), 401
-    
-    try:
-        token_parts = auth_header.split(" ")
-        if len(token_parts) != 2 or token_parts[0] != "Bearer":
-            return jsonify({"error": "Invalid Token Format. Use 'Bearer <token>'"}), 401
-        
-        token = token_parts[1]
-        verify_resp = requests.get(f"{USER_SERVICE_URL}/api/auth/verify", params={'token': token})
-        
-        if verify_resp.status_code != 200:
-            return jsonify({"error": "Invalid or Expired Token"}), 401
-            
-        user_info = verify_resp.json() 
-        user_email = user_info['email']
-        user_role = user_info['role']
 
-        if required_role and user_role != required_role:
-             return jsonify({"error": "Forbidden: Access Denied"}), 403
+    token_parts = auth_header.split(" ")
+    if len(token_parts) != 2 or token_parts[0] != "Bearer":
+        return jsonify({"error": "Invalid Token Format"}), 401
 
-        new_headers = {key: value for (key, value) in request.headers if key != 'Host'}
-        new_headers['X-User-Email'] = user_email 
-        new_headers['X-User-Role'] = user_role
+    token = token_parts[1]
+    verify_resp = requests.get(f"{USER_SERVICE_URL}/api/auth/verify", params={'token': token})
+    if verify_resp.status_code != 200:
+        return jsonify({"error": "Invalid or Expired Token"}), 401
 
-        url = f"{service_url}{path}"
-        
-        resp = requests.request(
-            method=request.method,
-            url=url,
-            headers=new_headers,
-            data=request.get_data(),
-            params=request.args
-        )
-        return Response(resp.content, resp.status_code, dict(resp.headers))
+    user_info = verify_resp.json()
+    user_email = user_info['email']
+    user_role = user_info['role']
 
-    except Exception as e:
-        return jsonify({"error": f"Gateway Error: {str(e)}"}), 500
+    if required_role and user_role != required_role:
+        return jsonify({"error": "Forbidden"}), 403
 
+    new_headers = {k: v for k, v in request.headers if k != 'Host'}
+    new_headers['X-User-Email'] = user_email
+    new_headers['X-User-Role'] = user_role
+
+    url = f"{service_url}{path}"
+    resp = requests.request(
+        method=request.method,
+        url=url,
+        headers=new_headers,
+        data=request.get_data(),
+        params=request.args
+    )
+    return Response(resp.content, resp.status_code, dict(resp.headers))
+
+# ---------- ROUTES ----------
 @app.route('/api/auth/<path:path>', methods=['POST'])
 def auth_proxy(path):
     url = f"{USER_SERVICE_URL}/api/auth/{path}"
-    try:
-        resp = requests.post(url, json=request.json)
-        return Response(resp.content, resp.status_code, dict(resp.headers))
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    resp = requests.post(url, json=request.json)
+    return Response(resp.content, resp.status_code, dict(resp.headers))
 
-@app.route('/api/movies', methods=['GET', 'POST'])
-def handle_movies_list():
+@app.route('/api/movies', methods=['GET','POST'])
+def movies_list():
     if request.method == 'POST':
-        return validate_and_forward(MOVIE_SERVICE_URL, request.path, required_role='admin')
+        return validate_and_forward(MOVIE_SERVICE_URL, request.path, 'admin')
     return public_forward(MOVIE_SERVICE_URL, request.path)
 
-@app.route('/api/movies/<path:path>', methods=['GET', 'PUT', 'DELETE'])
-def handle_movie_detail(path):
-    if request.method in ['PUT', 'DELETE']:
-        return validate_and_forward(MOVIE_SERVICE_URL, request.path, required_role='admin')
+@app.route('/api/movies/<path:path>', methods=['GET','PUT','DELETE'])
+def movie_detail(path):
+    if request.method in ['PUT','DELETE']:
+        return validate_and_forward(MOVIE_SERVICE_URL, request.path, 'admin')
     return public_forward(MOVIE_SERVICE_URL, request.path)
 
-@app.route('/api/showtimes', methods=['GET', 'POST'])
-def handle_showtimes_list():
+@app.route('/api/showtimes', methods=['GET','POST'])
+def showtimes_list():
     if request.method == 'POST':
-        return validate_and_forward(MOVIE_SERVICE_URL, request.path, required_role='admin')
+        return validate_and_forward(MOVIE_SERVICE_URL, request.path, 'admin')
     return public_forward(MOVIE_SERVICE_URL, request.path)
 
-@app.route('/api/showtimes/<path:path>', methods=['GET', 'PUT', 'DELETE'])
-def handle_showtime_detail(path):
-    if request.method in ['PUT', 'DELETE']:
-        return validate_and_forward(MOVIE_SERVICE_URL, request.path, required_role='admin')
+@app.route('/api/showtimes/<path:path>', methods=['GET','PUT','DELETE'])
+def showtime_detail(path):
+    if request.method in ['PUT','DELETE']:
+        return validate_and_forward(MOVIE_SERVICE_URL, request.path, 'admin')
     return public_forward(MOVIE_SERVICE_URL, request.path)
 
-@app.route('/api/bookings', methods=['GET', 'POST'])
-def handle_bookings():
+@app.route('/api/bookings', methods=['GET','POST'])
+def bookings():
     return validate_and_forward(BOOKING_SERVICE_URL, request.path)
 
-@app.route('/api/bookings/<path:path>', methods=['GET', 'DELETE'])
-def handle_booking_detail(path):
+@app.route('/api/bookings/<path:path>', methods=['GET','DELETE'])
+def booking_detail(path):
     return validate_and_forward(BOOKING_SERVICE_URL, request.path)
 
 @app.route('/api/payments', methods=['POST'])
-def handle_payments():
+def payments():
     return validate_and_forward(PAYMENT_SERVICE_URL, request.path)
 
+# ---------- RUN ----------
 if __name__ == '__main__':
     print("API Gateway running on port 5000...")
-    app.run(debug=True, port=5000, host='0.0.0.0')
+    app.run(host='0.0.0.0', port=5000, debug=True)

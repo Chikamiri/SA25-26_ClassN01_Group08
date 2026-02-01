@@ -1,7 +1,7 @@
 // src/api/apiClient.js
 
 // Base URL cho API Gateway. Theo kế hoạch, nó chạy trên port 5000.
-export const API_GATEWAY_URL = 'http://127.0.0.1:5000/api';
+export const API_GATEWAY_URL = import.meta.env.VITE_API_BASE_URL;
 
 // Hàm helper để thực hiện các yêu cầu fetch với header Authorization nếu có
 export async function request(endpoint, options = {}) {
