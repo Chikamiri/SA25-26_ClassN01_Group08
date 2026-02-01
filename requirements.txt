@@ -4,3 +4,4 @@ SQLAlchemy
 pika
 python-dotenv
 requests
+flask-cors
