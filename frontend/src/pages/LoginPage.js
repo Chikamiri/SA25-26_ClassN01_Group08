@@ -3,22 +3,31 @@ import { loginUser } from '../api/apiClient.js';
 const LoginPage = {
   render: () => {
     return `
-      <div>
-        <h2>Đăng Nhập Hệ Thống</h2>
-        <p>Vui lòng đăng nhập để tiếp tục.</p>
-        <form id="login-form">
-          <div>
-            <label>Email:</label><br />
-            <input type="email" id="email" placeholder="user@example.com" required style="padding: 5px;">
+      <div class="row justify-content-center mt-5">
+        <div class="col-md-5 col-lg-4">
+          <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+              <h2 class="text-center fw-bold mb-4">Đăng Nhập</h2>
+              <form id="login-form">
+                <div class="mb-3">
+                  <label class="form-label">Email</label>
+                  <input type="email" id="email" class="form-control" placeholder="user@example.com" required>
+                </div>
+                <div class="mb-4">
+                  <label class="form-label">Mật khẩu</label>
+                  <input type="password" id="password" class="form-control" placeholder="••••••••" required>
+                </div>
+                <div class="d-grid">
+                  <button type="submit" id="login-btn" class="btn btn-primary py-2 fw-bold">Đăng nhập</button>
+                </div>
+              </form>
+              <div id="error-msg" class="text-danger mt-3 text-center small"></div>
+              <div class="mt-4 p-3 bg-light rounded small">
+                <p class="mb-0 text-muted"><strong>Tài khoản thử nghiệm:</strong><br>user@example.com / password123</p>
+              </div>
+            </div>
           </div>
-          <div style="margin-top: 10px;">
-            <label>Mật khẩu:</label><br />
-            <input type="password" id="password" placeholder="password123" required style="padding: 5px;">
-          </div>
-          <button type="submit" id="login-btn" style="margin-top: 20px; padding: 10px 15px;">Đăng nhập</button>
-        </form>
-        <p id="error-msg" style="color: red; margin-top: 15px;"></p>
-        <p style="margin-top: 10px;">Tài khoản thử nghiệm: user@example.com / password123</p>
+        </div>
       </div>
     `;
   },
@@ -38,8 +47,7 @@ const LoginPage = {
       try {
         const response = await loginUser({ username: email, password });
         localStorage.setItem('user', JSON.stringify(response));
-        alert('Đăng nhập thành công!');
-        window.location.href = '/'; // Redirect về trang chủ
+        window.location.href = '/'; 
       } catch (err) {
         console.error('Login failed:', err);
         errorMsg.innerText = err.message || 'Đã xảy ra lỗi khi đăng nhập. Vui lòng thử lại.';

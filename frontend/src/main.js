@@ -66,7 +66,7 @@ const router = async () => {
 
     // Render Header
     const headerHTML = Header.render();
-    content.innerHTML = headerHTML + '<div id="page-container" style="padding: 0 20px;">Loading...</div>'; // Placeholder
+    content.innerHTML = headerHTML + '<div id="page-container"></div>';
 
     // Render Page
     const pageContainer = document.getElementById('page-container');

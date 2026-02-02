@@ -1,29 +1,44 @@
-
 const Header = {
   render: () => {
     const user = JSON.parse(localStorage.getItem('user'));
     return `
-      <nav style="padding: 10px; background-color: #f0f0f0; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
-        <div>
-          <a href="/" class="nav-link" style="margin-right: 15px; text-decoration: none; color: #333;">Trang Chủ</a>
-          <a href="/movies" class="nav-link" style="margin-right: 15px; text-decoration: none; color: #333;">Phim</a>
-          ${user && user.role === 'customer' ? `
-            <a href="/my-bookings" class="nav-link" style="margin-right: 15px; text-decoration: none; color: #333;">Vé Của Tôi</a>
-          ` : ''}
-          ${user && user.role === 'admin' ? `
-            <a href="/admin/dashboard" class="nav-link" style="margin-right: 15px; text-decoration: none; color: #333;">Admin</a>
-          ` : ''}
-        </div>
-        <div>
-          ${!user ? `
-            <a href="/login" class="nav-link" style="margin-right: 15px; text-decoration: none; color: #333;">Đăng Nhập</a>
-            <a href="/admin/login" class="nav-link" style="text-decoration: none; color: #333;">Đăng Nhập Admin</a>
-          ` : `
-            <div style="display: flex; align-items: center;">
-              <span style="margin-right: 15px; color: #333;">Xin chào, ${user.email} (${user.role})</span>
-              <button id="logout-btn" style="padding: 5px 10px; cursor: pointer;">Đăng xuất</button>
+      <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+        <div class="container">
+          <a class="navbar-brand fw-bold" href="/">🎬 MovieBook</a>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+              <li class="nav-item">
+                <a class="nav-link" href="/">Trang Chủ</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="/movies">Phim</a>
+              </li>
+              ${user && user.role === 'customer' ? `
+                <li class="nav-item">
+                  <a class="nav-link" href="/my-bookings">Vé Của Tôi</a>
+                </li>
+              ` : ''}
+              ${user && user.role === 'admin' ? `
+                <li class="nav-item">
+                  <a class="nav-link text-warning" href="/admin/dashboard">Admin</a>
+                </li>
+              ` : ''}
+            </ul>
+            <div class="d-flex align-items-center">
+              ${!user ? `
+                <a href="/login" class="btn btn-outline-light btn-sm me-2">Đăng Nhập</a>
+                <a href="/admin/login" class="btn btn-outline-warning btn-sm">Admin Login</a>
+              ` : `
+                <span class="navbar-text me-3 text-light">
+                  <small>Chào, ${user.email}</small>
+                </span>
+                <button id="logout-btn" class="btn btn-danger btn-sm">Đăng xuất</button>
+              `}
             </div>
-          `}
+          </div>
         </div>
       </nav>
     `;
@@ -33,8 +48,7 @@ const Header = {
     if (logoutBtn) {
       logoutBtn.addEventListener('click', () => {
         localStorage.removeItem('user');
-        alert('Bạn đã đăng xuất.');
-        window.location.href = '/'; // Reload trang để reset state nhanh nhất cho Vanilla JS đơn giản
+        window.location.href = '/';
       });
     }
   }

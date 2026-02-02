@@ -3,22 +3,34 @@ import { loginUser } from '../api/apiClient.js';
 const AdminLoginPage = {
   render: () => {
     return `
-      <div>
-        <h2>Đăng Nhập Tài Khoản Quản Trị</h2>
-        <p>Chỉ dành cho quản trị viên.</p>
-        <form id="admin-login-form">
-          <div>
-            <label>Email (hoặc username "admin"):</label><br />
-            <input type="text" id="admin-email" placeholder="admin" required style="padding: 5px;">
+      <div class="row justify-content-center mt-5">
+        <div class="col-md-5 col-lg-4">
+          <div class="card shadow border-0">
+            <div class="card-header bg-danger text-white text-center py-3">
+              <h4 class="mb-0 fw-bold">Admin Login</h4>
+            </div>
+            <div class="card-body p-4">
+              <p class="text-muted text-center mb-4">Khu vực dành riêng cho quản trị viên.</p>
+              <form id="admin-login-form">
+                <div class="mb-3">
+                  <label class="form-label">Username / Email</label>
+                  <input type="text" id="admin-email" class="form-control" placeholder="admin" required>
+                </div>
+                <div class="mb-4">
+                  <label class="form-label">Mật khẩu</label>
+                  <input type="password" id="admin-password" class="form-control" placeholder="••••••••" required>
+                </div>
+                <div class="d-grid">
+                  <button type="submit" id="admin-login-btn" class="btn btn-danger py-2 fw-bold">Đăng nhập Admin</button>
+                </div>
+              </form>
+              <div id="admin-error-msg" class="text-danger mt-3 text-center small"></div>
+              <div class="mt-4 p-3 bg-light rounded small border">
+                <p class="mb-0 text-muted"><strong>Tài khoản mặc định:</strong><br>admin / 111111</p>
+              </div>
+            </div>
           </div>
-          <div style="margin-top: 10px;">
-            <label>Mật khẩu:</label><br />
-            <input type="password" id="admin-password" placeholder="111111" required style="padding: 5px;">
-          </div>
-          <button type="submit" id="admin-login-btn" style="margin-top: 20px; padding: 10px 15px;">Đăng nhập Admin</button>
-        </form>
-        <p id="admin-error-msg" style="color: red; margin-top: 15px;"></p>
-        <p style="margin-top: 10px;">Tài khoản mặc định: <b>admin</b> / <b>111111</b></p>
+        </div>
       </div>
     `;
   },
@@ -36,22 +48,20 @@ const AdminLoginPage = {
       errorMsg.innerText = '';
 
       try {
-        // Backend yêu cầu field 'username', nhưng form nhập là email.
-        // Map email input vào field username của payload.
         const response = await loginUser({ username: email, password });
         
         if (response.role === 'admin') {
             localStorage.setItem('user', JSON.stringify(response));
-            alert('Đăng nhập Admin thành công!');
             window.location.href = '/admin/dashboard';
         } else {
-             errorMsg.innerText = 'Bạn không có quyền truy cập trang quản trị.';
-             alert('Bạn không có quyền truy cập trang này.');
+             errorMsg.innerText = 'Tài khoản này không có quyền quản trị.';
+             // logout if accidentally logged in as user
+             localStorage.removeItem('user');
         }
 
       } catch (err) {
         console.error('Admin login failed:', err);
-        errorMsg.innerText = err.message || 'Thông tin đăng nhập Admin không hợp lệ.';
+        errorMsg.innerText = err.message || 'Thông tin đăng nhập không hợp lệ.';
       } finally {
         loginBtn.disabled = false;
         loginBtn.innerText = 'Đăng nhập Admin';

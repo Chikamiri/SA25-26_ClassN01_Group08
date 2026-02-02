@@ -4,14 +4,22 @@ const MyBookingsPage = {
   render: async () => {
     const user = JSON.parse(localStorage.getItem('user'));
     if (!user) {
-        return `<p>Vui lòng <a href="/login">đăng nhập</a> để xem các vé đã đặt.</p>`;
+        return `
+          <div class="container py-5 text-center">
+            <div class="alert alert-warning d-inline-block">
+              Vui lòng <a href="/login" class="alert-link">đăng nhập</a> để xem các vé đã đặt.
+            </div>
+          </div>
+        `;
     }
 
     return `
-      <div>
-        <h2>Các Vé Đã Đặt Của Bạn</h2>
+      <div class="container py-4">
+        <h2 class="fw-bold mb-4">Các Vé Đã Đặt</h2>
         <div id="bookings-list-container">
-            Đang tải...
+            <div class="text-center py-5">
+              <div class="spinner-border text-primary" role="status"></div>
+            </div>
         </div>
       </div>
     `;
@@ -26,27 +34,48 @@ const MyBookingsPage = {
         const bookings = await getMyBookings();
         
         if (!bookings || bookings.length === 0) {
-            container.innerHTML = '<p>Bạn chưa có vé nào được đặt.</p>';
+            container.innerHTML = `
+              <div class="card border-0 shadow-sm text-center p-5">
+                <p class="text-muted mb-0">Bạn chưa có vé nào được đặt. <a href="/movies">Khám phá phim ngay!</a></p>
+              </div>
+            `;
             return;
         }
 
         container.innerHTML = `
-            <ul style="list-style: none; padding: 0;">
-                ${bookings.map(booking => `
-                    <li style="margin-bottom: 15px; padding: 15px; border: 1px solid #ccc; border-radius: 5px;">
-                        <p><strong>Mã đặt vé:</strong> #${booking.id}</p>
-                        <p><strong>Suất chiếu ID:</strong> ${booking.showtime_id}</p>
-                        <p><strong>Chỗ ngồi:</strong> ${booking.seat_number}</p>
-                        <p><strong>Giá vé:</strong> ${booking.amount ? booking.amount.toLocaleString() : '0'} VND</p>
-                        <p><strong>Trạng thái:</strong> ${booking.status}</p>
-                    </li>
-                `).join('')}
-            </ul>
+            <div class="table-responsive bg-white rounded shadow-sm">
+              <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th class="ps-4">Mã Đặt Vé</th>
+                    <th>Suất Chiếu</th>
+                    <th>Chỗ Ngồi</th>
+                    <th>Giá Vé</th>
+                    <th>Trạng Thái</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${bookings.map(booking => `
+                    <tr>
+                      <td class="ps-4 fw-bold text-secondary">#${booking.id}</td>
+                      <td>ID: ${booking.showtime_id}</td>
+                      <td><span class="badge bg-light text-dark border">${booking.seat_number}</span></td>
+                      <td>${booking.amount ? booking.amount.toLocaleString() : '0'} VND</td>
+                      <td>
+                        <span class="badge ${booking.status === 'confirmed' ? 'bg-success' : 'bg-warning text-dark'}">
+                          ${booking.status}
+                        </span>
+                      </td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
         `;
 
     } catch (err) {
         console.error('Failed to fetch bookings:', err);
-        container.innerHTML = `<p style="color:red">Không thể tải danh sách vé đã đặt: ${err.message}</p>`;
+        container.innerHTML = `<div class="alert alert-danger">Không thể tải danh sách vé đã đặt: ${err.message}</div>`;
     }
   }
 };

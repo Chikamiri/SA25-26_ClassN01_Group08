@@ -79,3 +79,5 @@
 - Added backend endpoints (`GET /api/showtimes/<id>/seats`) to support visual seat selection.
 - Connected Frontend to Payment Service; updated booking flow to "Reserve (Pending) -> Pay -> Confirm".
 - Replaced manual seat text input with a 10x10 interactive visual seat map; added "My Bookings" page with real API data.
+- Big UI changes.
+- Add '.db' to .gitignore

@@ -7,46 +7,62 @@ const BookingsPage = {
     const showtimeId = pathParts[2];
 
     if (!user) {
-        return `<p>Bạn cần <a href="/login">đăng nhập</a> để đặt vé.</p>`;
+        return `
+          <div class="container py-5 text-center">
+            <div class="alert alert-warning d-inline-block">
+              Bạn cần <a href="/login" class="alert-link">đăng nhập</a> để đặt vé.
+            </div>
+          </div>
+        `;
     }
 
     return `
-      <div>
-        <h2>Đặt Vé & Chọn Chỗ</h2>
-        <p>Suất chiếu ID: ${showtimeId}</p>
+      <div class="container py-4">
+        <h2 class="fw-bold mb-4 text-center">Đặt Vé & Chọn Chỗ</h2>
         
-        <div id="booking-container">
-            <div style="margin: 20px 0; padding: 10px; background: #eee; text-align: center; font-weight: bold;">
-                MÀN HÌNH
-            </div>
-            
-            <div id="seat-map" style="display: grid; grid-template-columns: repeat(10, 1fr); gap: 10px; max-width: 500px; margin: 0 auto;">
-                Loading seats...
-            </div>
+        <div id="booking-container" class="card shadow-sm border-0">
+            <div class="card-body p-4">
+                <div class="bg-secondary text-white text-center py-2 mb-5 rounded shadow-sm mx-auto" style="max-width: 80%; letter-spacing: 5px;">
+                  <small>MÀN HÌNH</small>
+                </div>
+                
+                <div id="seat-map" class="d-flex flex-wrap justify-content-center gap-2 mb-5" style="max-width: 600px; margin: 0 auto;">
+                    <div class="spinner-border text-primary" role="status"></div>
+                </div>
 
-            <div style="margin-top: 30px; border-top: 1px solid #ccc; padding-top: 20px;">
-                <p>Ghế đã chọn: <span id="selected-seat-display" style="font-weight: bold; color: #007bff;">Chưa chọn</span></p>
-                <button id="confirm-booking-btn" disabled style="padding: 10px 15px; cursor: not-allowed;">
-                    Xác nhận Đặt vé
-                </button>
+                <div class="border-top pt-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <div>
+                        <p class="mb-0 text-muted small text-uppercase">Ghế đã chọn</p>
+                        <h4 id="selected-seat-display" class="fw-bold text-primary mb-0">Chưa chọn</h4>
+                      </div>
+                      <button id="confirm-booking-btn" class="btn btn-primary btn-lg px-5 fw-bold" disabled>
+                          Tiếp tục đặt vé
+                      </button>
+                    </div>
+                </div>
+                <div id="booking-error" class="text-danger mt-3 text-center small"></div>
             </div>
-            <p id="booking-error" style="color: red; margin-top: 15px;"></p>
         </div>
         
-        <div id="payment-step" style="display: none; margin-top: 20px; padding: 20px; border: 2px solid #007bff; border-radius: 8px;">
-           <h3>Thanh Toán</h3>
-           <p id="payment-info"></p>
-           <button id="pay-now-btn" style="padding: 12px 20px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer;">
-              Thanh toán ngay (Giả lập)
-           </button>
+        <div id="payment-step" style="display: none;">
+           <div class="card shadow border-primary border-2">
+             <div class="card-body p-5 text-center">
+               <h3 class="fw-bold mb-3 text-primary">Thanh Toán</h3>
+               <div id="payment-info" class="lead mb-4"></div>
+               <button id="pay-now-btn" class="btn btn-success btn-lg px-5 fw-bold shadow">
+                  Xác nhận Thanh toán
+               </button>
+             </div>
+           </div>
         </div>
 
-        <div id="booking-success" style="display: none; margin-top: 20px; padding: 15px; border: 1px solid #28a745; border-radius: 5px; background-color: #d4edda; color: #155724;">
+        <div id="booking-success" style="display: none;" class="alert alert-success p-5 text-center shadow-sm">
         </div>
 
-        <p style="margin-top: 20px;">
-            <a href="/movies" style="text-decoration: none; color: #6c757d; margin-right: 10px;">&larr; Quay lại danh sách phim</a>
-        </p>
+        <div class="mt-4 text-center">
+            <a href="/movies" class="text-decoration-none text-muted small">&larr; Quay lại danh sách phim</a>
+        </div>
       </div>
     `;
   },
@@ -73,29 +89,37 @@ const BookingsPage = {
     const fetchSeats = async () => {
         try {
             const seats = await getShowtimeSeats(showtimeId);
-            seatMap.innerHTML = seats.map(seat => `
-                <div class="seat ${seat.status}" 
-                     data-seat="${seat.seat_number}" 
-                     style="padding: 10px; border: 1px solid #ccc; text-align: center; cursor: ${seat.status === 'available' ? 'pointer' : 'not-allowed'}; background: ${seat.status === 'available' ? 'white' : '#ddd'}; color: ${seat.status === 'available' ? 'black' : '#888'};">
-                    ${seat.seat_number}
-                </div>
-            `).join('');
+            seatMap.innerHTML = seats.map(seat => {
+                const isAvailable = seat.status === 'available';
+                return `
+                    <div class="seat-item ${isAvailable ? 'available' : 'booked'}" 
+                         data-seat="${seat.seat_number}" 
+                         style="width: 45px; height: 45px; line-height: 45px; border-radius: 6px; text-align: center; cursor: ${isAvailable ? 'pointer' : 'not-allowed'}; background: ${isAvailable ? '#f8f9fa' : '#e9ecef'}; border: 2px solid ${isAvailable ? '#dee2e6' : '#dee2e6'}; color: ${isAvailable ? '#212529' : '#adb5bd'}; font-weight: bold; font-size: 0.8rem; transition: all 0.2s;">
+                        ${seat.seat_number}
+                    </div>
+                `;
+            }).join('');
 
-            document.querySelectorAll('.seat.available').forEach(el => {
+            document.querySelectorAll('.seat-item.available').forEach(el => {
                 el.addEventListener('click', () => {
-                    document.querySelectorAll('.seat').forEach(s => s.style.borderColor = '#ccc');
-                    el.style.borderColor = '#007bff';
-                    el.style.boxShadow = '0 0 5px rgba(0,123,255,0.5)';
+                    document.querySelectorAll('.seat-item.available').forEach(s => {
+                      s.style.background = '#f8f9fa';
+                      s.style.borderColor = '#dee2e6';
+                      s.style.color = '#212529';
+                      s.style.transform = 'scale(1)';
+                    });
+                    el.style.background = '#0d6efd';
+                    el.style.borderColor = '#0d6efd';
+                    el.style.color = 'white';
+                    el.style.transform = 'scale(1.1)';
+                    
                     selectedSeat = el.dataset.seat;
                     selectedDisplay.innerText = selectedSeat;
                     confirmBtn.disabled = false;
-                    confirmBtn.style.cursor = 'pointer';
-                    confirmBtn.style.background = '#007bff';
-                    confirmBtn.style.color = 'white';
                 });
             });
         } catch (err) {
-            seatMap.innerHTML = `<p style="color:red">Lỗi tải sơ đồ ghế: ${err.message}</p>`;
+            seatMap.innerHTML = `<div class="alert alert-danger">Lỗi tải sơ đồ ghế: ${err.message}</div>`;
         }
     };
 
@@ -103,7 +127,7 @@ const BookingsPage = {
         if (!selectedSeat) return;
 
         confirmBtn.disabled = true;
-        confirmBtn.innerText = 'Đang đặt chỗ...';
+        confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Đang xử lý...';
         errorMsg.innerText = '';
 
         try {
@@ -116,20 +140,20 @@ const BookingsPage = {
             bookingContainer.style.display = 'none';
             paymentStep.style.display = 'block';
             paymentInfo.innerHTML = `
-                Bạn đang đặt ghế <strong>${selectedSeat}</strong> cho suất chiếu #${showtimeId}.<br>
-                Số tiền cần thanh toán: <strong>${response.price.toLocaleString()} VND</strong>
+                Ghế: <span class="badge bg-primary">${selectedSeat}</span><br>
+                Số tiền: <span class="fw-bold text-success">${response.price.toLocaleString()} VND</span>
             `;
 
         } catch (err) {
             errorMsg.innerText = err.message || 'Đã xảy ra lỗi khi đặt vé.';
             confirmBtn.disabled = false;
-            confirmBtn.innerText = 'Xác nhận Đặt vé';
+            confirmBtn.innerText = 'Tiếp tục đặt vé';
         }
     });
 
     payNowBtn.addEventListener('click', async () => {
         payNowBtn.disabled = true;
-        payNowBtn.innerText = 'Đang thanh toán...';
+        payNowBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Đang thanh toán...';
         
         try {
             await processPayment({ booking_id: currentBookingId });
@@ -137,19 +161,18 @@ const BookingsPage = {
             paymentStep.style.display = 'none';
             successDiv.style.display = 'block';
             successDiv.innerHTML = `
-                <h3>Thanh toán thành công!</h3>
-                <p>Vé của bạn đã được xác nhận. Mã đặt vé: #${currentBookingId}</p>
-                <button id="view-my-bookings" style="margin-top: 10px; padding: 8px 12px;">
-                    Xem các vé đã đặt
-                </button>
+                <div class="display-1 mb-4">✅</div>
+                <h3 class="fw-bold">Thanh toán thành công!</h3>
+                <p class="lead mb-4">Vé của bạn đã được xác nhận. Mã đặt vé: <strong>#${currentBookingId}</strong></p>
+                <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+                  <a href="/my-bookings" class="btn btn-primary btn-lg px-4">Xem Vé Của Tôi</a>
+                  <a href="/movies" class="btn btn-outline-secondary btn-lg px-4">Quay lại trang phim</a>
+                </div>
             `;
-            document.getElementById('view-my-bookings').addEventListener('click', () => {
-                window.location.href = '/my-bookings';
-            });
         } catch (err) {
             alert('Lỗi thanh toán: ' + err.message);
             payNowBtn.disabled = false;
-            payNowBtn.innerText = 'Thanh toán ngay (Giả lập)';
+            payNowBtn.innerText = 'Xác nhận Thanh toán';
         }
     });
 

@@ -3,19 +3,25 @@ import { getMovies } from '../api/apiClient.js';
 const MoviesPage = {
   render: async () => {
     return `
-      <div>
-        <h2>Danh Sách Phim</h2>
-        <div style="margin-bottom: 20px;">
-          <input
-            type="text"
-            id="search-input"
-            placeholder="Tìm kiếm phim theo tiêu đề..."
-            style="margin-right: 10px; padding: 8px; width: 300px;"
-          />
+      <div class="container py-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <h2 class="fw-bold">Danh Sách Phim</h2>
+          <div class="col-md-4">
+            <input
+              type="text"
+              id="search-input"
+              class="form-control"
+              placeholder="🔍 Tìm kiếm phim..."
+            />
+          </div>
         </div>
-        <ul id="movies-list" style="list-style: none; padding: 0;">
-          Loading movies...
-        </ul>
+        <div id="movies-list" class="row g-4">
+          <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+          </div>
+        </div>
       </div>
     `;
   },
@@ -25,29 +31,33 @@ const MoviesPage = {
 
     const fetchAndRenderMovies = async (query = '') => {
       try {
-        moviesList.innerHTML = 'Loading...';
         const movies = await getMovies(query);
         
         if (movies.length === 0) {
-            moviesList.innerHTML = '<p>Không tìm thấy phim nào.</p>';
+            moviesList.innerHTML = '<div class="col-12 text-center text-muted"><p>Không tìm thấy phim nào phù hợp.</p></div>';
             return;
         }
 
         moviesList.innerHTML = movies.map(movie => `
-          <li style="margin-bottom: 15px; padding: 10px; border: 1px solid #eee; border-radius: 5px;">
-            <h3>
-              <a href="/movies/${movie.id}" style="text-decoration: none; color: #007bff;">
-                ${movie.title}
-              </a>
-            </h3>
-            <p>Thể loại: ${movie.genre}</p>
-            <p>Thời lượng: ${movie.duration} phút</p>
-            <p>Ngày phát hành: ${movie.release_date}</p>
-          </li>
+          <div class="col-md-4 col-sm-6">
+            <div class="card h-100 shadow-sm border-0">
+              <div class="card-body">
+                <h5 class="card-title fw-bold">${movie.title}</h5>
+                <h6 class="card-subtitle mb-2 text-muted small">${movie.genre}</h6>
+                <p class="card-text small text-secondary">
+                  <strong>Thời lượng:</strong> ${movie.duration} phút<br>
+                  <strong>Khởi chiếu:</strong> ${new Date(movie.release_date).toLocaleDateString()}
+                </p>
+                <div class="d-grid mt-3">
+                  <a href="/movies/${movie.id}" class="btn btn-outline-primary btn-sm">Xem chi tiết</a>
+                </div>
+              </div>
+            </div>
+          </div>
         `).join('');
 
       } catch (err) {
-        moviesList.innerHTML = `<p style="color:red">Lỗi: ${err.message}</p>`;
+        moviesList.innerHTML = `<div class="col-12"><div class="alert alert-danger">Lỗi: ${err.message}</div></div>`;
       }
     };
 

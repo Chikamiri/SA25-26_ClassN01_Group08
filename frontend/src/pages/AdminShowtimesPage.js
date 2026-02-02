@@ -3,47 +3,75 @@ import { getShowtimes, getMovies, createShowtime, updateShowtime, deleteShowtime
 const AdminShowtimesPage = {
   render: async () => {
     return `
-      <div>
-        <h2>Quản lý Lịch Chiếu</h2>
-        <div style="margin-bottom: 20px;">
-            <button id="add-showtime-btn" style="padding: 10px 15px; background-color: #28a745; color: white; border: none; cursor: pointer;">+ Thêm Lịch Chiếu</button>
+      <div class="container py-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="fw-bold">Quản lý Lịch Chiếu</h2>
+            <button id="add-showtime-btn" class="btn btn-success">
+                <i class="bi bi-plus-circle"></i> + Thêm Lịch Chiếu
+            </button>
         </div>
-        <ul id="admin-showtimes-list" style="list-style: none; padding: 0;">
-          Loading showtimes...
-        </ul>
-        <p style="margin-top: 20px;">
-            <a href="/admin/dashboard" style="text-decoration: none; color: #6c757d;">&larr; Quay lại Dashboard</a>
-        </p>
 
-         <!-- Modal -->
-        <div id="showtime-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center;">
-            <div style="background: white; padding: 20px; border-radius: 5px; width: 400px; position: relative;">
-                <h3 id="modal-title">Thêm Lịch Chiếu</h3>
-                <form id="showtime-form">
-                    <input type="hidden" id="showtime-id">
-                    <div style="margin-bottom: 10px;">
-                        <label>Phim:</label>
-                        <select id="showtime-movie" style="width: 100%; padding: 5px;" required>
-                            <option value="">-- Chọn phim --</option>
-                        </select>
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">Phim</th>
+                                <th>Bắt Đầu</th>
+                                <th>Kết Thúc</th>
+                                <th>Giá Vé (VND)</th>
+                                <th class="text-end pe-4">Hành Động</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-showtimes-list">
+                             <tr><td colspan="5" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <a href="/admin/dashboard" class="text-decoration-none text-muted">&larr; Quay lại Dashboard</a>
+        </div>
+
+         <!-- Bootstrap Modal -->
+        <div class="modal fade" id="showtimeModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modal-title">Thêm Lịch Chiếu</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <div style="margin-bottom: 10px;">
-                        <label>Thời gian bắt đầu:</label>
-                        <input type="datetime-local" id="showtime-start" style="width: 100%; padding: 5px;" required>
+                    <div class="modal-body">
+                        <form id="showtime-form">
+                            <input type="hidden" id="showtime-id">
+                            <div class="mb-3">
+                                <label class="form-label">Phim</label>
+                                <select id="showtime-movie" class="form-select" required>
+                                    <option value="">-- Chọn phim --</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Thời gian bắt đầu</label>
+                                <input type="datetime-local" id="showtime-start" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Thời gian kết thúc</label>
+                                <input type="datetime-local" id="showtime-end" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Giá vé</label>
+                                <input type="number" id="showtime-price" class="form-control" required min="0">
+                            </div>
+                            <div class="text-end">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                <button type="submit" class="btn btn-primary">Lưu</button>
+                            </div>
+                        </form>
                     </div>
-                    <div style="margin-bottom: 10px;">
-                        <label>Thời gian kết thúc:</label>
-                        <input type="datetime-local" id="showtime-end" style="width: 100%; padding: 5px;" required>
-                    </div>
-                    <div style="margin-bottom: 10px;">
-                        <label>Giá vé:</label>
-                        <input type="number" id="showtime-price" style="width: 100%; padding: 5px;" required min="0">
-                    </div>
-                    <div style="text-align: right;">
-                        <button type="button" id="cancel-btn" style="margin-right: 10px; padding: 5px 10px; cursor: pointer;">Hủy</button>
-                        <button type="submit" style="padding: 5px 10px; background-color: #007bff; color: white; border: none; cursor: pointer;">Lưu</button>
-                    </div>
-                </form>
+                </div>
             </div>
         </div>
       </div>
@@ -52,10 +80,11 @@ const AdminShowtimesPage = {
   afterRender: async () => {
     const list = document.getElementById('admin-showtimes-list');
     const addBtn = document.getElementById('add-showtime-btn');
-    const modal = document.getElementById('showtime-modal');
     const form = document.getElementById('showtime-form');
-    const cancelBtn = document.getElementById('cancel-btn');
     const modalTitle = document.getElementById('modal-title');
+    
+    // Initialize Bootstrap Modal
+    const showtimeModal = new bootstrap.Modal(document.getElementById('showtimeModal'));
 
     // Inputs
     const idInput = document.getElementById('showtime-id');
@@ -67,7 +96,6 @@ const AdminShowtimesPage = {
     let showtimesData = [];
     let moviesData = [];
 
-    // Helper to format date for datetime-local input (YYYY-MM-DDTHH:mm)
     const toLocalISO = (dateStr) => {
         if (!dateStr) return '';
         const date = new Date(dateStr);
@@ -79,26 +107,24 @@ const AdminShowtimesPage = {
     const renderList = (showtimes) => {
         showtimesData = showtimes;
         if (showtimes.length === 0) {
-            list.innerHTML = '<p>Không có lịch chiếu nào.</p>';
+            list.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">Chưa có lịch chiếu nào.</td></tr>';
             return;
         }
 
         list.innerHTML = showtimes.map(st => {
             const movie = moviesData.find(m => m.id === st.movie_id);
-            const movieTitle = movie ? movie.title : `Movie ID ${st.movie_id}`;
+            const movieTitle = movie ? movie.title : `<span class="text-muted">Movie ID ${st.movie_id} (Đã xóa)</span>`;
             return `
-              <li style="margin-bottom: 10px; padding: 10px; border: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <strong>${movieTitle}</strong><br/>
-                    Start: ${st.start_time}<br/>
-                    End: ${st.end_time}<br/>
-                    Price: ${st.price}
-                </div>
-                <div>
-                    <button class="edit-btn" data-id="${st.id}" style="margin-right: 5px; cursor: pointer;">Sửa</button>
-                    <button class="delete-btn" data-id="${st.id}" style="color: red; cursor: pointer;">Xóa</button>
-                </div>
-              </li>
+              <tr>
+                <td class="ps-4 fw-bold text-primary">${movieTitle}</td>
+                <td>${new Date(st.start_time).toLocaleString()}</td>
+                <td>${new Date(st.end_time).toLocaleString()}</td>
+                <td>${st.price ? st.price.toLocaleString() : '0'}</td>
+                <td class="text-end pe-4">
+                    <button class="btn btn-sm btn-outline-primary me-2 edit-btn" data-id="${st.id}">Sửa</button>
+                    <button class="btn btn-sm btn-outline-danger delete-btn" data-id="${st.id}">Xóa</button>
+                </td>
+              </tr>
             `;
         }).join('');
 
@@ -122,18 +148,8 @@ const AdminShowtimesPage = {
 
             renderList(showtimes);
         } catch (err) {
-            list.innerHTML = `<p style="color:red">Lỗi tải dữ liệu: ${err.message}</p>`;
+            list.innerHTML = `<tr><td colspan="5" class="text-center text-danger py-4">Lỗi tải dữ liệu: ${err.message}</td></tr>`;
         }
-    };
-
-    const openModal = () => {
-        modal.style.display = 'flex';
-    };
-
-    const closeModal = () => {
-        modal.style.display = 'none';
-        form.reset();
-        idInput.value = '';
     };
 
     const openEditModal = (id) => {
@@ -141,22 +157,21 @@ const AdminShowtimesPage = {
         if (showtime) {
             idInput.value = showtime.id;
             movieSelect.value = showtime.movie_id;
-            // Assuming start_time and end_time from API are parseable strings
             startInput.value = toLocalISO(showtime.start_time);
             endInput.value = toLocalISO(showtime.end_time);
             priceInput.value = showtime.price;
             
             modalTitle.innerText = 'Sửa Lịch Chiếu';
-            openModal();
+            showtimeModal.show();
         }
     };
 
     addBtn.addEventListener('click', () => {
+        form.reset();
+        idInput.value = '';
         modalTitle.innerText = 'Thêm Lịch Chiếu';
-        openModal();
+        showtimeModal.show();
     });
-
-    cancelBtn.addEventListener('click', closeModal);
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -176,13 +191,11 @@ const AdminShowtimesPage = {
         try {
             if (id) {
                 await updateShowtime(id, data);
-                alert('Cập nhật thành công!');
             } else {
                 await createShowtime(data);
-                alert('Thêm mới thành công!');
             }
-            closeModal();
-            loadData(); // Reload both to ensure data consistency
+            showtimeModal.hide();
+            loadData();
         } catch (err) {
             alert('Lỗi: ' + err.message);
         }
@@ -192,7 +205,6 @@ const AdminShowtimesPage = {
         if (confirm('Bạn có chắc chắn muốn xóa lịch chiếu này?')) {
             try {
                 await deleteShowtime(id);
-                alert('Xóa thành công!');
                 loadData();
             } catch (err) {
                 alert('Lỗi: ' + err.message);
