@@ -89,16 +89,34 @@ const BookingsPage = {
     const fetchSeats = async () => {
         try {
             const seats = await getShowtimeSeats(showtimeId);
-            seatMap.innerHTML = seats.map(seat => {
-                const isAvailable = seat.status === 'available';
-                return `
-                    <div class="seat-item ${isAvailable ? 'available' : 'booked'}" 
-                         data-seat="${seat.seat_number}" 
-                         style="width: 45px; height: 45px; line-height: 45px; border-radius: 6px; text-align: center; cursor: ${isAvailable ? 'pointer' : 'not-allowed'}; background: ${isAvailable ? '#f8f9fa' : '#e9ecef'}; border: 2px solid ${isAvailable ? '#dee2e6' : '#dee2e6'}; color: ${isAvailable ? '#212529' : '#adb5bd'}; font-weight: bold; font-size: 0.8rem; transition: all 0.2s;">
-                        ${seat.seat_number}
-                    </div>
-                `;
-            }).join('');
+            
+            // Group seats by row letter for better layout
+            const rows = {};
+            seats.forEach(seat => {
+              const rowLetter = seat.seat_number.match(/[A-Z]+/)[0];
+              if (!rows[rowLetter]) rows[rowLetter] = [];
+              rows[rowLetter].push(seat);
+            });
+
+            seatMap.innerHTML = Object.keys(rows).sort().map(rowLetter => `
+                <div class="d-flex justify-content-center gap-2 mb-2 w-100">
+                  <div class="text-muted small fw-bold me-2" style="width: 20px; line-height: 45px;">${rowLetter}</div>
+                  ${rows[rowLetter].sort((a, b) => {
+                    const numA = parseInt(a.seat_number.match(/\d+/)[0]);
+                    const numB = parseInt(b.seat_number.match(/\d+/)[0]);
+                    return numA - numB;
+                  }).map(seat => {
+                      const isAvailable = seat.status === 'available';
+                      return `
+                          <div class="seat-item ${isAvailable ? 'available' : 'booked'}" 
+                               data-seat="${seat.seat_number}" 
+                               style="width: 35px; height: 35px; line-height: 35px; border-radius: 4px; text-align: center; cursor: ${isAvailable ? 'pointer' : 'not-allowed'}; background: ${isAvailable ? '#f8f9fa' : '#e9ecef'}; border: 2px solid ${isAvailable ? '#dee2e6' : '#dee2e6'}; color: ${isAvailable ? '#212529' : '#adb5bd'}; font-weight: bold; font-size: 0.7rem; transition: all 0.2s;">
+                              ${seat.seat_number.match(/\d+/)[0]}
+                          </div>
+                      `;
+                  }).join('')}
+                </div>
+            `).join('');
 
             document.querySelectorAll('.seat-item.available').forEach(el => {
                 el.addEventListener('click', () => {

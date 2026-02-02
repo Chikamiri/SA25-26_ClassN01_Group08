@@ -92,6 +92,11 @@ export async function getShowtimeSeats(showtimeId) {
   return request(`showtimes/${showtimeId}/seats`, { method: 'GET' });
 }
 
+// Lấy danh sách phòng chiếu
+export async function getRooms() {
+  return request('rooms', { method: 'GET' });
+}
+
 // --- Các hàm API liên quan đến Đặt vé ---
 
 // Đặt vé

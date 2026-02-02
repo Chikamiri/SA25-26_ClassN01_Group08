@@ -85,10 +85,29 @@ class BookingService:
     def cancel_all_bookings_for_showtime(self, showtime_id):
         return self.booking_repo.delete_all_bookings_by_showtime(showtime_id)
 
-    def create_seats(self, showtime_id, total_seats):
-        self.booking_repo.create_seats(showtime_id, total_seats)
+    def create_seats(self, showtime_id, rows_count, seats_per_row):
+        self.booking_repo.create_seats_realistic(showtime_id, rows_count, seats_per_row)
 
     def get_seats(self, showtime_id):
+        # We need to get room info from Movie Service to initialize if needed
+        try:
+            resp = requests.get(f"{self.MOVIE_SERVICE_URL}/api/showtimes/{showtime_id}")
+            if resp.status_code == 200:
+                showtime = resp.json()
+                room_id = showtime.get('room_id')
+                if room_id:
+                    room_resp = requests.get(f"{self.MOVIE_SERVICE_URL}/api/rooms/{room_id}")
+                    if room_resp.status_code == 200:
+                        room = room_resp.json()
+                        # Call get_seats_by_showtime with room info for lazy init
+                        return self.booking_repo.get_seats_by_showtime_realistic(
+                            showtime_id, 
+                            room['rows'], 
+                            room['seats_per_row']
+                        )
+        except Exception as e:
+            print(f"Error fetching room info for seats: {e}")
+
         return self.booking_repo.get_seats_by_showtime(showtime_id)
 
     def get_all_bookings(self):

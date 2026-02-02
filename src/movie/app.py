@@ -63,18 +63,29 @@ def delete_movie(movie_id):
     except Exception as e: return jsonify({"error": str(e)}), 400
 
 
+@app.route('/api/rooms', methods=['GET'])
+def get_rooms():
+    return jsonify(movie_service.get_all_rooms())
+
+@app.route('/api/rooms/<room_id>', methods=['GET'])
+def get_room_detail(room_id):
+    room = movie_service.get_room_by_id(room_id)
+    if room:
+        return jsonify(room), 200
+    return jsonify({"error": "Room not found"}), 404
+
+
 @app.route('/api/showtimes', methods=['GET'])
 def get_showtimes():
-    movie_id = request.args.get('movie_id')
-    return jsonify(movie_service.get_all_showtimes(movie_id))
+    movie_id = request.args.get('movie_id')                                       
+    return jsonify(movie_service.get_all_showtimes(movie_id))                     
 
-@app.route('/api/showtimes/<showtime_id>', methods=['GET'])
-def get_showtime_detail(showtime_id):
-    res = movie_service.get_showtime(showtime_id)
-    if res: return jsonify(res), 200
-    return jsonify({"error": "Not found"}), 404
-
-@app.route('/api/showtimes', methods=['POST'])
+@app.route('/api/showtimes/<showtime_id>', methods=['GET'])                       
+def get_showtime_detail(showtime_id):                                             
+  res = movie_service.get_showtime(showtime_id)                                 
+  if res: return jsonify(res), 200                                              
+  return jsonify({"error": "Not found"}), 404 
+@app.route('/api/showtimes', methods=['POST'])    
 def create_showtime():
     data = request.json
     try:
@@ -83,8 +94,8 @@ def create_showtime():
             movie_id=data['movie_id'],
             start_time=data['start_time'],
             end_time=data['end_time'],
-            total_seats=data.get('total_seats', 50),
-            price=data.get('price', 50000) 
+            price=data.get('price', 50000),
+            room_id=data.get('room_id')
         )
         return jsonify(res), 201
     except Exception as e: return jsonify({"error": str(e)}), 400
@@ -97,7 +108,8 @@ def update_showtime(showtime_id):
             showtime_id, 
             data['start_time'], 
             data['end_time'],
-            data.get('price', 50000)
+            data.get('price', 50000),
+            room_id=data.get('room_id')
         )
         return jsonify(res), 200
     except Exception as e: return jsonify({"error": str(e)}), 400

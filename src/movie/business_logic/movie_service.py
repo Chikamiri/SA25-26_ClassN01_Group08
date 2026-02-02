@@ -129,6 +129,12 @@ class MovieService:
             "id": movie_id
         }
     
+    def get_all_rooms(self):
+        return self.movie_repo.get_all_rooms()
+
+    def get_room_by_id(self, room_id):
+        return self.movie_repo.get_room(room_id)
+
     def get_all_showtimes(self, movie_id=None):
         showtimes = self.movie_repo.get_all_showtimes(movie_id)
         return [s.to_dict() for s in showtimes]
@@ -137,44 +143,48 @@ class MovieService:
         st = self.movie_repo.get_showtime(showtime_id)
         return st.to_dict() if st else None
 
-    def add_showtime(self, id, movie_id, start_time, end_time, total_seats, price):
+    def add_showtime(self, id, movie_id, start_time, end_time, price, room_id=None):
         self.validate_showtime_duration(movie_id, start_time, end_time)
-        
-        if total_seats > 64:
-            raise ValueError("Maximum seats allowed is 64")
         
         if id and self.movie_repo.get_showtime(id):
              raise ValueError(f"Showtime ID {id} already exists")
 
-        new_id = self.movie_repo.add_showtime(id, movie_id, start_time, end_time, price)
+        if room_id:
+            room = self.movie_repo.get_room(room_id)
+            if not room:
+                raise ValueError(f"Room ID {room_id} not found")
+
+        new_id = self.movie_repo.add_showtime(id, movie_id, start_time, end_time, price, room_id)
         
-        try:
-            requests.post(f"{self.BOOKING_SERVICE_URL}/api/internal/seats", json={
-                "showtime_id": new_id,
-                "total_seats": total_seats
-            })
-        except Exception as e:
-            print(f"Warning: Could not call Booking Service: {e}")
+        # We don't call internal/seats here anymore, 
+        # Booking service will lazy-init based on room info from this service.
 
         return {"message": "Showtime created", "id": new_id, "price": price}
 
-    def update_showtime(self, showtime_id, start_time, end_time, price):
+    def update_showtime(self, showtime_id, start_time, end_time, price, room_id=None):
         current_showtime = self.movie_repo.get_showtime(showtime_id)
         if not current_showtime:
             raise ValueError("Showtime ID not found")
         
         self.validate_showtime_duration(current_showtime.movie_id, start_time, end_time)
         
+        if room_id:
+            room = self.movie_repo.get_room(room_id)
+            if not room:
+                raise ValueError(f"Room ID {room_id} not found")
+
         old_price = current_showtime.price
         new_price = price if price is not None else old_price
         
         is_price_changed = (new_price != old_price)
+        is_room_changed = (room_id is not None and room_id != current_showtime.room_id)
         
-        self.movie_repo.update_showtime(showtime_id, start_time, end_time, new_price)
+        self.movie_repo.update_showtime(showtime_id, start_time, end_time, new_price, room_id)
         
-        if is_price_changed:
-            count = self.process_refund_and_cancel(showtime_id, reason="Showtime price updated")
-            return {"message": f"Updated. Price changed: {count} bookings refunded.", "id": showtime_id}
+        if is_price_changed or is_room_changed:
+            reason = "Showtime price updated" if is_price_changed else "Room/Seating changed"
+            count = self.process_refund_and_cancel(showtime_id, reason=reason)
+            return {"message": f"Updated. {count} bookings refunded due to changes.", "id": showtime_id}
         
 
         try:

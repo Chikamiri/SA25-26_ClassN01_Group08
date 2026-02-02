@@ -27,19 +27,56 @@ class MovieRepository:
         ''')
 
         cursor.execute('''
+            CREATE TABLE IF NOT EXISTS rooms (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                rows INTEGER NOT NULL,
+                seats_per_row INTEGER NOT NULL
+            )
+        ''')
+
+        cursor.execute('''
             CREATE TABLE IF NOT EXISTS showtimes (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 movie_id INTEGER NOT NULL,
+                room_id INTEGER,
                 start_time TEXT NOT NULL,
                 end_time TEXT NOT NULL,
                 price INTEGER DEFAULT 50000,
-                FOREIGN KEY(movie_id) REFERENCES movies(id)
+                FOREIGN KEY(movie_id) REFERENCES movies(id),
+                FOREIGN KEY(room_id) REFERENCES rooms(id)
             )
         ''')
+
+        # Migration for room_id
+        cursor.execute("PRAGMA table_info(showtimes)")
+        columns = [info[1] for info in cursor.fetchall()]
+        if 'room_id' not in columns:
+            cursor.execute("ALTER TABLE showtimes ADD COLUMN room_id INTEGER")
         
         conn.commit()
         conn.close()
 
+    # --- Room Methods ---
+    def get_all_rooms(self):
+        conn = self._get_connection()
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM rooms')
+        rows = cursor.fetchall()
+        conn.close()
+        return [{"id": r[0], "name": r[1], "rows": r[2], "seats_per_row": r[3]} for r in rows]
+
+    def get_room(self, room_id):
+        conn = self._get_connection()
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM rooms WHERE id = ?', (room_id,))
+        row = cursor.fetchone()
+        conn.close()
+        if row:
+            return {"id": row[0], "name": row[1], "rows": row[2], "seats_per_row": row[3]}
+        return None
+
+    # --- Movie Methods ---
 
     def add_movie(self, id, title, genre, duration, release_date):
         conn = self._get_connection()
@@ -108,21 +145,22 @@ class MovieRepository:
         conn.close()
         return rows_affected > 0
 
+    # --- Showtime Methods ---
 
-    def add_showtime(self, id, movie_id, start_time, end_time, price):
+    def add_showtime(self, id, movie_id, start_time, end_time, price, room_id=None):
         conn = self._get_connection()
         cursor = conn.cursor()
         
         if id is not None:
              cursor.execute(
-                'INSERT INTO showtimes (id, movie_id, start_time, end_time, price) VALUES (?, ?, ?, ?, ?)',
-                (id, movie_id, start_time, end_time, price)
+                'INSERT INTO showtimes (id, movie_id, start_time, end_time, price, room_id) VALUES (?, ?, ?, ?, ?, ?)',
+                (id, movie_id, start_time, end_time, price, room_id)
             )
              new_id = id
         else:
             cursor.execute(
-                'INSERT INTO showtimes (movie_id, start_time, end_time, price) VALUES (?, ?, ?, ?)',
-                (movie_id, start_time, end_time, price)
+                'INSERT INTO showtimes (movie_id, start_time, end_time, price, room_id) VALUES (?, ?, ?, ?, ?)',
+                (movie_id, start_time, end_time, price, room_id)
             )
             new_id = cursor.lastrowid
             
@@ -137,31 +175,60 @@ class MovieRepository:
         row = cursor.fetchone()
         conn.close()
         if row:
-            price = row[4] if len(row) > 4 else 50000
-            return Showtime(id=row[0], movie_id=row[1], start_time=row[2], end_time=row[3], price=price)
+            # Map row based on new schema
+            # id, movie_id, room_id, start_time, end_time, price
+            # But PRAGMA table_info says room_id was added later if migrated
+            # To be safe, let's use dictionary-like access if we were using sqlite3.Row
+            # but here we use indexes. 
+            # Original: id[0], movie_id[1], start_time[2], end_time[3], price[4]
+            # New: id[0], movie_id[1], room_id[2], start_time[3], end_time[4], price[5]
+            
+            # Let's check column names to be absolutely sure or just assume the new order
+            # If we just added the column, it's usually at the end unless recreated.
+            # In our _init_db we define it at index 2.
+            
+            # Re-fetch with row_factory for safety
+            conn = self._get_connection()
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            row = cursor.execute('SELECT * FROM showtimes WHERE id = ?', (showtime_id,)).fetchone()
+            conn.close()
+            
+            if row:
+                return Showtime(
+                    id=row['id'], 
+                    movie_id=row['movie_id'], 
+                    start_time=row['start_time'], 
+                    end_time=row['end_time'], 
+                    price=row['price'],
+                    room_id=row['room_id']
+                )
         return None
 
     def get_all_showtimes(self, movie_id=None):
         conn = self._get_connection()
+        conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         if movie_id:
-            cursor.execute('SELECT * FROM showtimes WHERE movie_id = ?', (movie_id,))
+            rows = cursor.execute('SELECT * FROM showtimes WHERE movie_id = ?', (movie_id,)).fetchall()
         else:
-            cursor.execute('SELECT * FROM showtimes')
-        rows = cursor.fetchall()
+            rows = cursor.execute('SELECT * FROM showtimes').fetchall()
         conn.close()
         
-        results = []
-        for r in rows:
-            price = r[4] if len(r) > 4 else 50000
-            results.append(Showtime(id=r[0], movie_id=r[1], start_time=r[2], end_time=r[3], price=price))
-        return results
+        return [Showtime(
+            id=r['id'], 
+            movie_id=r['movie_id'], 
+            start_time=r['start_time'], 
+            end_time=r['end_time'], 
+            price=r['price'],
+            room_id=r['room_id']
+        ) for r in rows]
 
-    def update_showtime(self, showtime_id, start_time, end_time, price):
+    def update_showtime(self, showtime_id, start_time, end_time, price, room_id=None):
         conn = self._get_connection()
         conn.execute(
-            'UPDATE showtimes SET start_time = ?, end_time = ?, price = ? WHERE id = ?', 
-            (start_time, end_time, price, showtime_id)
+            'UPDATE showtimes SET start_time = ?, end_time = ?, price = ?, room_id = ? WHERE id = ?', 
+            (start_time, end_time, price, room_id, showtime_id)
         )
         conn.commit()
         conn.close()

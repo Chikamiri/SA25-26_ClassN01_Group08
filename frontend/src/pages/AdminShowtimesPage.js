@@ -1,4 +1,4 @@
-import { getShowtimes, getMovies, createShowtime, updateShowtime, deleteShowtime } from '../api/apiClient.js';
+import { getShowtimes, getMovies, createShowtime, updateShowtime, deleteShowtime, getRooms } from '../api/apiClient.js';
 
 const AdminShowtimesPage = {
   render: async () => {
@@ -54,13 +54,16 @@ const AdminShowtimesPage = {
                                 </select>
                             </div>
                             <div class="mb-3">
+                                <label class="form-label">Phòng Chiếu</label>
+                                <select id="showtime-room" class="form-select" required>
+                                    <option value="">-- Chọn phòng --</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
                                 <label class="form-label">Thời gian bắt đầu</label>
                                 <input type="datetime-local" id="showtime-start" class="form-control" required>
                             </div>
-                            <div class="mb-3">
-                                <label class="form-label">Thời gian kết thúc</label>
-                                <input type="datetime-local" id="showtime-end" class="form-control" required>
-                            </div>
+                            <!-- End time is calculated automatically -->
                             <div class="mb-3">
                                 <label class="form-label">Giá vé</label>
                                 <input type="number" id="showtime-price" class="form-control" required min="0">
@@ -89,19 +92,30 @@ const AdminShowtimesPage = {
     // Inputs
     const idInput = document.getElementById('showtime-id');
     const movieSelect = document.getElementById('showtime-movie');
+    const roomSelect = document.getElementById('showtime-room');
     const startInput = document.getElementById('showtime-start');
-    const endInput = document.getElementById('showtime-end');
     const priceInput = document.getElementById('showtime-price');
 
     let showtimesData = [];
     let moviesData = [];
+    let roomsData = [];
 
     const toLocalISO = (dateStr) => {
         if (!dateStr) return '';
         const date = new Date(dateStr);
+        if (isNaN(date.getTime())) return ''; // Invalid date check
         const offset = date.getTimezoneOffset() * 60000;
         const localISOTime = (new Date(date - offset)).toISOString().slice(0, 16);
         return localISOTime;
+    };
+
+    const formatDateForDB = (dateObj) => {
+        const year = dateObj.getFullYear();
+        const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const day = String(dateObj.getDate()).padStart(2, '0');
+        const hours = String(dateObj.getHours()).padStart(2, '0');
+        const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+        return `${year}-${month}-${day} ${hours}:${minutes}`;
     };
 
     const renderList = (showtimes) => {
@@ -113,12 +127,18 @@ const AdminShowtimesPage = {
 
         list.innerHTML = showtimes.map(st => {
             const movie = moviesData.find(m => m.id === st.movie_id);
+            const room = roomsData.find(r => r.id === st.room_id);
             const movieTitle = movie ? movie.title : `<span class="text-muted">Movie ID ${st.movie_id} (Đã xóa)</span>`;
+            const roomName = room ? room.name : `<span class="text-muted">N/A</span>`;
+            
             return `
               <tr>
-                <td class="ps-4 fw-bold text-primary">${movieTitle}</td>
-                <td>${new Date(st.start_time).toLocaleString()}</td>
-                <td>${new Date(st.end_time).toLocaleString()}</td>
+                <td class="ps-4 fw-bold text-primary">
+                  ${movieTitle}<br>
+                  <small class="text-muted">${roomName}</small>
+                </td>
+                <td>${st.start_time}</td>
+                <td>${st.end_time}</td>
                 <td>${st.price ? st.price.toLocaleString() : '0'}</td>
                 <td class="text-end pe-4">
                     <button class="btn btn-sm btn-outline-primary me-2 edit-btn" data-id="${st.id}">Sửa</button>
@@ -139,12 +159,21 @@ const AdminShowtimesPage = {
 
     const loadData = async () => {
         try {
-            const [movies, showtimes] = await Promise.all([getMovies(), getShowtimes()]);
+            const [movies, showtimes, rooms] = await Promise.all([
+                getMovies(), 
+                getShowtimes(),
+                getRooms()
+            ]);
             moviesData = movies;
+            roomsData = rooms;
             
             // Populate Movie Select
             movieSelect.innerHTML = '<option value="">-- Chọn phim --</option>' + 
                 movies.map(m => `<option value="${m.id}">${m.title}</option>`).join('');
+
+            // Populate Room Select
+            roomSelect.innerHTML = '<option value="">-- Chọn phòng --</option>' + 
+                rooms.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
 
             renderList(showtimes);
         } catch (err) {
@@ -157,8 +186,8 @@ const AdminShowtimesPage = {
         if (showtime) {
             idInput.value = showtime.id;
             movieSelect.value = showtime.movie_id;
+            roomSelect.value = showtime.room_id || '';
             startInput.value = toLocalISO(showtime.start_time);
-            endInput.value = toLocalISO(showtime.end_time);
             priceInput.value = showtime.price;
             
             modalTitle.innerText = 'Sửa Lịch Chiếu';
@@ -176,17 +205,26 @@ const AdminShowtimesPage = {
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const id = idInput.value;
-        const data = {
-            movie_id: parseInt(movieSelect.value),
-            start_time: startInput.value,
-            end_time: endInput.value,
-            price: parseFloat(priceInput.value)
-        };
-
-        if (new Date(data.start_time) >= new Date(data.end_time)) {
-            alert('Thời gian kết thúc phải sau thời gian bắt đầu.');
+        
+        const movieId = parseInt(movieSelect.value);
+        const roomId = parseInt(roomSelect.value);
+        const selectedMovie = moviesData.find(m => m.id === movieId);
+        
+        if (!selectedMovie) {
+            alert("Vui lòng chọn phim hợp lệ");
             return;
         }
+
+        const startDate = new Date(startInput.value);
+        const endDate = new Date(startDate.getTime() + selectedMovie.duration * 60000);
+
+        const data = {
+            movie_id: movieId,
+            room_id: roomId,
+            start_time: formatDateForDB(startDate),
+            end_time: formatDateForDB(endDate),
+            price: parseFloat(priceInput.value)
+        };
 
         try {
             if (id) {

@@ -16,9 +16,10 @@ class Movie:
         }
 
 class Showtime:
-    def __init__(self, id, movie_id, start_time, end_time, price):
+    def __init__(self, id, movie_id, start_time, end_time, price, room_id=None):
         self.id = id
         self.movie_id = movie_id
+        self.room_id = room_id
         self.start_time = start_time
         self.end_time = end_time
         self.price = price 
@@ -27,6 +28,7 @@ class Showtime:
         return {
             "id": self.id,
             "movie_id": self.movie_id,
+            "room_id": self.room_id,
             "start_time": self.start_time,
             "end_time": self.end_time,
             "price": self.price 

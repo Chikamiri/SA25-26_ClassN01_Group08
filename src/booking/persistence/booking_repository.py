@@ -48,11 +48,51 @@ class BookingRepository:
         conn.close()
         return row and row['status'] == 'available'
 
+    def get_seats_by_showtime_realistic(self, showtime_id, rows_count, seats_per_row):
+        conn = self._get_connection()
+        rows = conn.execute('SELECT seat_number, status FROM seats WHERE showtime_id = ?', (showtime_id,)).fetchall()
+        conn.close()
+        
+        if not rows:
+            self.create_seats_realistic(showtime_id, rows_count, seats_per_row)
+            conn = self._get_connection()
+            rows = conn.execute('SELECT seat_number, status FROM seats WHERE showtime_id = ?', (showtime_id,)).fetchall()
+            conn.close()
+
+        return [dict(row) for row in rows]
+
+    def create_seats_realistic(self, showtime_id, rows_count, seats_per_row):
+        conn = self._get_connection()
+        # Row letters: A, B, C, ...
+        # i = 0 -> A, i = 1 -> B ...
+        for r in range(rows_count):
+            row_letter = chr(65 + r) # 65 is 'A'
+            for s in range(1, seats_per_row + 1):
+                seat_name = f"{row_letter}{s}"
+                conn.execute('INSERT OR IGNORE INTO seats (showtime_id, seat_number) VALUES (?, ?)', (showtime_id, seat_name))
+        conn.commit()
+        conn.close()
+
     def get_seats_by_showtime(self, showtime_id):
         conn = self._get_connection()
         rows = conn.execute('SELECT seat_number, status FROM seats WHERE showtime_id = ?', (showtime_id,)).fetchall()
         conn.close()
+        
+        # Fallback Lazy Init: Default 50 seats (S1-S50) if no room info and no seats
+        if not rows:
+            self.create_seats(showtime_id, 50)
+            conn = self._get_connection()
+            rows = conn.execute('SELECT seat_number, status FROM seats WHERE showtime_id = ?', (showtime_id,)).fetchall()
+            conn.close()
+
         return [dict(row) for row in rows]
+
+    def create_seats(self, showtime_id, total_seats):
+        conn = self._get_connection()
+        for i in range(1, total_seats + 1):
+            conn.execute('INSERT OR IGNORE INTO seats (showtime_id, seat_number) VALUES (?, ?)', (showtime_id, f"S{i}"))
+        conn.commit()
+        conn.close()
 
     def create_booking(self, showtime_id, seat_number, email, amount):
         conn = self._get_connection()
@@ -118,13 +158,6 @@ class BookingRepository:
         rows = conn.execute('SELECT customer_email as email, seat_number FROM bookings WHERE showtime_id = ?', (showtime_id,)).fetchall()
         conn.close()
         return [dict(row) for row in rows]
-
-    def create_seats(self, showtime_id, total_seats):
-        conn = self._get_connection()
-        for i in range(1, total_seats + 1):
-            conn.execute('INSERT OR IGNORE INTO seats (showtime_id, seat_number) VALUES (?, ?)', (showtime_id, f"S{i}"))
-        conn.commit()
-        conn.close()
 
     def delete_all_bookings_by_showtime(self, showtime_id):
         conn = self._get_connection()
