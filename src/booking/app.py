@@ -1,11 +1,13 @@
 import sys
 import os
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from booking.business_logic.booking_service import BookingService
 
 app = Flask(__name__)
+CORS(app)
 booking_service = BookingService()
 
 
@@ -24,6 +26,13 @@ def book_ticket():
 @app.route('/api/bookings', methods=['GET'])
 def get_bookings():
     return jsonify(booking_service.get_all_bookings())
+
+@app.route('/api/bookings/my', methods=['GET'])
+def get_my_bookings():
+    user_email = request.headers.get('X-User-Email')
+    if not user_email:
+        return jsonify({"error": "Unauthorized"}), 401
+    return jsonify(booking_service.get_my_bookings(user_email))
 
 @app.route('/api/bookings/<booking_id>', methods=['GET'])
 def get_detail(booking_id):
@@ -56,6 +65,10 @@ def get_customers_by_showtime(showtime_id):
         return jsonify(customers), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@app.route('/api/showtimes/<showtime_id>/seats', methods=['GET'])
+def get_seats(showtime_id):
+    return jsonify(booking_service.get_seats(showtime_id))
 
 if __name__ == '__main__':
     print("Booking Service running on port 5002...")

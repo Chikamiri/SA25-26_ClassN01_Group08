@@ -24,7 +24,7 @@ class BookingRepository:
                 seat_number TEXT,
                 customer_email TEXT,
                 amount INTEGER,
-                status TEXT DEFAULT 'booked'
+                status TEXT DEFAULT 'PENDING_PAYMENT'
             )
         ''')
         conn.execute('''
@@ -48,20 +48,40 @@ class BookingRepository:
         conn.close()
         return row and row['status'] == 'available'
 
+    def get_seats_by_showtime(self, showtime_id):
+        conn = self._get_connection()
+        rows = conn.execute('SELECT seat_number, status FROM seats WHERE showtime_id = ?', (showtime_id,)).fetchall()
+        conn.close()
+        return [dict(row) for row in rows]
+
     def create_booking(self, showtime_id, seat_number, email, amount):
         conn = self._get_connection()
         cursor = conn.cursor()
         
-        cursor.execute('UPDATE seats SET status = "booked" WHERE showtime_id = ? AND seat_number = ?', (showtime_id, seat_number))
-        
-        cursor.execute(
-            'INSERT INTO bookings (showtime_id, seat_number, customer_email, amount) VALUES (?, ?, ?, ?)',
-            (showtime_id, seat_number, email, amount)
-        )
-        booking_id = cursor.lastrowid
-        conn.commit()
-        conn.close()
-        return booking_id
+        try:
+            # Atomic update: only change to 'booked' if it is currently 'available'
+            cursor.execute('''
+                UPDATE seats 
+                SET status = "booked" 
+                WHERE showtime_id = ? AND seat_number = ? AND status = "available"
+            ''', (showtime_id, seat_number))
+            
+            if cursor.rowcount == 0:
+                conn.close()
+                raise ValueError(f"Seat {seat_number} is no longer available.")
+            
+            cursor.execute(
+                'INSERT INTO bookings (showtime_id, seat_number, customer_email, amount, status) VALUES (?, ?, ?, ?, ?)',
+                (showtime_id, seat_number, email, amount, 'PENDING_PAYMENT')
+            )
+            booking_id = cursor.lastrowid
+            conn.commit()
+            return booking_id
+        except Exception as e:
+            conn.rollback()
+            raise e
+        finally:
+            conn.close()
 
     def get_booking(self, booking_id):
         conn = self._get_connection()
@@ -84,6 +104,12 @@ class BookingRepository:
     def get_all_bookings(self):
         conn = self._get_connection()
         rows = conn.execute('SELECT * FROM bookings').fetchall()
+        conn.close()
+        return [dict(row) for row in rows]
+    
+    def get_bookings_by_customer(self, email):
+        conn = self._get_connection()
+        rows = conn.execute('SELECT * FROM bookings WHERE customer_email = ?', (email,)).fetchall()
         conn.close()
         return [dict(row) for row in rows]
     

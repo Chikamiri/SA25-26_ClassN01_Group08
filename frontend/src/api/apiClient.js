@@ -1,7 +1,7 @@
 // src/api/apiClient.js
 
 // Base URL cho API Gateway. Theo kế hoạch, nó chạy trên port 5000.
-export const API_GATEWAY_URL = import.meta.env.VITE_API_BASE_URL;
+export const API_GATEWAY_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:5000/api';
 
 // Hàm helper để thực hiện các yêu cầu fetch với header Authorization nếu có
 export async function request(endpoint, options = {}) {
@@ -87,6 +87,11 @@ export async function getShowtimes(movieId = null) {
   return request(endpoint, { method: 'GET' });
 }
 
+// Lấy danh sách ghế của suất chiếu
+export async function getShowtimeSeats(showtimeId) {
+  return request(`showtimes/${showtimeId}/seats`, { method: 'GET' });
+}
+
 // --- Các hàm API liên quan đến Đặt vé ---
 
 // Đặt vé
@@ -96,6 +101,20 @@ export async function bookTicket(bookingData) {
   return request('bookings', {
     method: 'POST',
     body: JSON.stringify(bookingData),
+  });
+}
+
+// Lấy danh sách vé đã đặt của tôi
+export async function getMyBookings() {
+  return request('bookings/my', { method: 'GET' });
+}
+
+// Xử lý thanh toán
+export async function processPayment(paymentData) {
+  // paymentData: { booking_id }
+  return request('payments', {
+    method: 'POST',
+    body: JSON.stringify(paymentData),
   });
 }
 

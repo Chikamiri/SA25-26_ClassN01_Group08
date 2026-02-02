@@ -1,11 +1,13 @@
 import sys
 import os
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from movie.business_logic.movie_service import MovieService
 
 app = Flask(__name__)
+CORS(app)
 movie_service = MovieService()
 
 

@@ -88,8 +88,14 @@ class BookingService:
     def create_seats(self, showtime_id, total_seats):
         self.booking_repo.create_seats(showtime_id, total_seats)
 
+    def get_seats(self, showtime_id):
+        return self.booking_repo.get_seats_by_showtime(showtime_id)
+
     def get_all_bookings(self):
         return self.booking_repo.get_all_bookings()
+
+    def get_my_bookings(self, email):
+        return self.booking_repo.get_bookings_by_customer(email)
 
     def get_booking_details(self, booking_id):
         return self.booking_repo.get_booking(booking_id)

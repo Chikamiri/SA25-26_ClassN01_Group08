@@ -71,5 +71,11 @@
 - Fix frontend login bug (mismatched 'email' vs 'username' keys)
 - Fix missing Admin management routes in frontend router
 - Create AdminMoviesPage and AdminShowtimesPage for movie/showtime management
-- Update `issues_report.md` with current frontend status
-- Update `checklist.md` to reflect project completion status (Lab 8)
+
+## 2/2/2026
+- Refactored Gateway to use `flask-cors` properly; allowed custom headers `peko-key`, `Authorization`, `X-User-Email` to fix "Missing or Invalid Header" errors.
+- Enabled CORS for all individual microservices (`user`, `movie`, `booking`, `payment`) for easier testing and isolation.
+- Implemented atomic seat locking (SQL `UPDATE ... WHERE status='available'`) in `BookingRepository` to prevent double-booking (ASR 2 compliance).
+- Added backend endpoints (`GET /api/showtimes/<id>/seats`) to support visual seat selection.
+- Connected Frontend to Payment Service; updated booking flow to "Reserve (Pending) -> Pay -> Confirm".
+- Replaced manual seat text input with a 10x10 interactive visual seat map; added "My Bookings" page with real API data.

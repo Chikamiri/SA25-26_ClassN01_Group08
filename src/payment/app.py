@@ -4,11 +4,13 @@ import requests
 import pika
 import json
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 from dotenv import load_dotenv
 
 load_dotenv()
 
 app = Flask(__name__)
+CORS(app)
 
 BOOKING_SERVICE_URL = os.getenv("BOOKING_SERVICE_URL", "http://127.0.0.1:5002")
 RABBITMQ_HOST = os.getenv("RABBITMQ_HOST", "localhost")

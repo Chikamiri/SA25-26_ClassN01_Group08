@@ -1,10 +1,16 @@
 import os
+import os
 import requests
 from flask import Flask, request, jsonify, Response
+from flask_cors import CORS
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
 app = Flask(__name__)
+# Explicitly allow the custom headers we use
+CORS(app, resources={r"/api/*": {"origins": "*"}}, 
+     allow_headers=["Content-Type", "Authorization", "peko-key", "X-User-Email", "X-User-Role"],
+     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
 
 MOVIE_SERVICE_URL = os.getenv('MOVIE_SERVICE_URL', 'http://movie_service:5001')
 BOOKING_SERVICE_URL = os.getenv('BOOKING_SERVICE_URL', 'http://booking_service:5002')
@@ -12,18 +18,6 @@ PAYMENT_SERVICE_URL = os.getenv('PAYMENT_SERVICE_URL', 'http://payment_service:5
 USER_SERVICE_URL = os.getenv('USER_SERVICE_URL', 'http://user_service:5004')
 VALID_API_KEY = os.getenv('API_KEY_VALUE', 'BO_CHIKA')
 API_KEY_NAME = os.getenv('API_KEY_NAME', 'peko-key')
-
-# ---------- CORS ----------
-@app.after_request
-def after_request(response):
-    response.headers['Access-Control-Allow-Origin'] = '*'
-    response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization,peko-key,X-User-Email,X-User-Role'
-    response.headers['Access-Control-Allow-Methods'] = 'GET,PUT,POST,DELETE,OPTIONS'
-    return response
-
-@app.route('/api/<path:path>', methods=['OPTIONS'])
-def options_handler(path):
-    return '', 200
 
 # ---------- API KEY CHECK ----------
 @app.before_request
@@ -108,6 +102,10 @@ def showtimes_list():
 
 @app.route('/api/showtimes/<path:path>', methods=['GET','PUT','DELETE'])
 def showtime_detail(path):
+    # Route for /api/showtimes/<id>/seats
+    if path.endswith('/seats'):
+        return public_forward(BOOKING_SERVICE_URL, request.path)
+    
     if request.method in ['PUT','DELETE']:
         return validate_and_forward(MOVIE_SERVICE_URL, request.path, 'admin')
     return public_forward(MOVIE_SERVICE_URL, request.path)
