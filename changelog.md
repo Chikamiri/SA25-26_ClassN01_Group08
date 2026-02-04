@@ -84,6 +84,7 @@
 
 ## 4/2/2026, 18:00
 
+- Language to English
 - Redesign booking UI with tabbed Date Ribbon and Time Grid
 - Implement tiered seat system (Standard, VIP, Couple) with dynamic price surcharges
 - Support multi-seat booking and visual seat selection

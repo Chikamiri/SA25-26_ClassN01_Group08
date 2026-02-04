@@ -11,14 +11,14 @@ const Header = {
           <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav me-auto">
               <li class="nav-item">
-                <a class="nav-link" href="/">Trang Chủ</a>
+                <a class="nav-link" href="/">Home</a>
               </li>
               <li class="nav-item">
-                <a class="nav-link" href="/movies">Phim</a>
+                <a class="nav-link" href="/movies">Movies</a>
               </li>
               ${user && user.role === 'customer' ? `
                 <li class="nav-item">
-                  <a class="nav-link" href="/my-bookings">Vé Của Tôi</a>
+                  <a class="nav-link" href="/my-bookings">My Tickets</a>
                 </li>
               ` : ''}
               ${user && user.role === 'admin' ? `
@@ -29,15 +29,15 @@ const Header = {
             </ul>
             <div class="d-flex align-items-center">
               ${!user ? `
-                <a href="/login" class="btn btn-outline-light btn-sm me-2">Đăng Nhập</a>
+                <a href="/login" class="btn btn-outline-light btn-sm me-2">Login</a>
                 <a href="/admin/login" class="btn btn-outline-warning btn-sm">Admin Login</a>
               ` : `
                 <a href="/profile" class="text-decoration-none me-3">
                     <span class="navbar-text text-light">
-                      <small>Chào, ${user.email}</small>
+                      <small>Hello, ${user.email}</small>
                     </span>
                 </a>
-                <button id="logout-btn" class="btn btn-danger btn-sm">Đăng xuất</button>
+                <button id="logout-btn" class="btn btn-danger btn-sm">Logout</button>
               `}
             </div>
           </div>

@@ -9,9 +9,9 @@ const AdminMoviesPage = {
         <div class="admin-content">
             <div class="container-fluid">
                 <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h2 class="fw-bold mb-0">Quản lý Phim</h2>
+                    <h2 class="fw-bold mb-0">Manage Movies</h2>
                     <button id="add-movie-btn" class="btn btn-primary shadow-sm">
-                        <i class="bi bi-plus-lg"></i> Thêm Phim Mới
+                        <i class="bi bi-plus-lg"></i> Add New Movie
                     </button>
                 </div>
 
@@ -21,11 +21,11 @@ const AdminMoviesPage = {
                             <table class="table table-hover align-middle mb-0">
                                 <thead class="table-light">
                                     <tr>
-                                        <th class="ps-4">Tên Phim</th>
-                                        <th>Thể Loại</th>
-                                        <th>Thời Lượng</th>
-                                        <th>Ngày Phát Hành</th>
-                                        <th class="text-end pe-4">Hành Động</th>
+                                        <th class="ps-4">Movie Title</th>
+                                        <th>Genre</th>
+                                        <th>Duration</th>
+                                        <th>Release Date</th>
+                                        <th class="text-end pe-4">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody id="admin-movies-list">
@@ -41,33 +41,33 @@ const AdminMoviesPage = {
                     <div class="modal-dialog modal-dialog-centered">
                         <div class="modal-content">
                             <div class="modal-header bg-light">
-                                <h5 class="modal-title fw-bold" id="modal-title">Thêm Phim</h5>
+                                <h5 class="modal-title fw-bold" id="modal-title">Add Movie</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
                             <div class="modal-body p-4">
                                 <form id="movie-form">
                                     <input type="hidden" id="movie-id">
                                     <div class="mb-3">
-                                        <label class="form-label text-muted small fw-bold text-uppercase">Tên phim</label>
+                                        <label class="form-label text-muted small fw-bold text-uppercase">Movie title</label>
                                         <input type="text" id="movie-title" class="form-control" required>
                                     </div>
                                     <div class="mb-3">
-                                        <label class="form-label text-muted small fw-bold text-uppercase">Thể loại</label>
+                                        <label class="form-label text-muted small fw-bold text-uppercase">Genre</label>
                                         <input type="text" id="movie-genre" class="form-control" required>
                                     </div>
                                     <div class="row">
                                         <div class="col-md-6 mb-3">
-                                            <label class="form-label text-muted small fw-bold text-uppercase">Thời lượng (phút)</label>
+                                            <label class="form-label text-muted small fw-bold text-uppercase">Duration (minutes)</label>
                                             <input type="number" id="movie-duration" class="form-control" required min="1">
                                         </div>
                                         <div class="col-md-6 mb-3">
-                                            <label class="form-label text-muted small fw-bold text-uppercase">Ngày phát hành</label>
+                                            <label class="form-label text-muted small fw-bold text-uppercase">Release date</label>
                                             <input type="date" id="movie-release-date" class="form-control" required>
                                         </div>
                                     </div>
                                     <div class="text-end mt-4">
-                                        <button type="button" class="btn btn-light me-2" data-bs-dismiss="modal">Hủy</button>
-                                        <button type="submit" class="btn btn-primary px-4">Lưu</button>
+                                        <button type="button" class="btn btn-light me-2" data-bs-dismiss="modal">Cancel</button>
+                                        <button type="submit" class="btn btn-primary px-4">Save</button>
                                     </div>
                                 </form>
                             </div>
@@ -102,14 +102,14 @@ const AdminMoviesPage = {
     const renderList = (movies) => {
         moviesData = movies;
         if (movies.length === 0) {
-            list.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-5">Chưa có phim nào.</td></tr>';
+            list.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-5">No movies yet.</td></tr>';
             return;
         }
         list.innerHTML = movies.map(movie => `
           <tr>
             <td class="ps-4 fw-bold text-primary">${movie.title}</td>
             <td><span class="badge bg-light text-dark border">${movie.genre}</span></td>
-            <td>${movie.duration} phút</td>
+            <td>${movie.duration} minutes</td>
             <td>${new Date(movie.release_date).toLocaleDateString()}</td>
             <td class="text-end pe-4">
                 <button class="btn btn-sm btn-outline-primary me-2 edit-btn" data-id="${movie.id}">
@@ -136,7 +136,7 @@ const AdminMoviesPage = {
             const movies = await getMovies();
             renderList(movies);
         } catch (err) {
-            list.innerHTML = `<tr><td colspan="5" class="text-center text-danger py-4">Lỗi tải dữ liệu: ${err.message}</td></tr>`;
+            list.innerHTML = `<tr><td colspan="5" class="text-center text-danger py-4">Error loading data: ${err.message}</td></tr>`;
         }
     };
 
@@ -148,7 +148,7 @@ const AdminMoviesPage = {
             genreInput.value = movie.genre;
             durationInput.value = movie.duration;
             releaseDateInput.value = movie.release_date;
-            modalTitle.innerText = 'Sửa Phim';
+            modalTitle.innerText = 'Edit Movie';
             movieModal.show();
         }
     };
@@ -156,7 +156,7 @@ const AdminMoviesPage = {
     addBtn.addEventListener('click', () => {
         form.reset();
         idInput.value = '';
-        modalTitle.innerText = 'Thêm Phim';
+        modalTitle.innerText = 'Add Movie';
         movieModal.show();
     });
 
@@ -171,7 +171,7 @@ const AdminMoviesPage = {
         };
 
         if (data.duration <= 0) {
-            alert('Thời lượng phải lớn hơn 0');
+            alert('Duration must be greater than 0');
             return;
         }
 
@@ -184,17 +184,17 @@ const AdminMoviesPage = {
             movieModal.hide();
             fetchMovies();
         } catch (err) {
-            alert('Lỗi: ' + err.message);
+            alert('Error: ' + err.message);
         }
     });
 
     const handleDelete = async (id) => {
-        if (confirm('Bạn có chắc chắn muốn xóa phim này?')) {
+        if (confirm('Are you sure you want to delete this movie?')) {
             try {
                 await deleteMovie(id);
                 fetchMovies();
             } catch (err) {
-                alert('Lỗi: ' + err.message);
+                alert('Error: ' + err.message);
             }
         }
     };

@@ -10,23 +10,23 @@ const AdminSidebar = {
             <i class="bi bi-speedometer2"></i> Dashboard
           </a>
           <a class="nav-link ${activePage === 'movies' ? 'active' : ''}" href="/admin/movies/manage">
-            <i class="bi bi-camera-reels"></i> Quản lý Phim
+            <i class="bi bi-camera-reels"></i> Manage Movies
           </a>
           <a class="nav-link ${activePage === 'showtimes' ? 'active' : ''}" href="/admin/showtimes/manage">
-            <i class="bi bi-calendar-week"></i> Quản lý Lịch chiếu
+            <i class="bi bi-calendar-week"></i> Manage Showtimes
           </a>
-          <a class="nav-link text-muted" href="#" onclick="alert('Tính năng đang phát triển')">
-            <i class="bi bi-ticket-detailed"></i> Quản lý Đặt vé
+          <a class="nav-link text-muted" href="#" onclick="alert('Feature under development')">
+            <i class="bi bi-ticket-detailed"></i> Manage Bookings
           </a>
-          <a class="nav-link text-muted" href="#" onclick="alert('Tính năng đang phát triển')">
-             <i class="bi bi-people"></i> Quản lý Users
+          <a class="nav-link text-muted" href="#" onclick="alert('Feature under development')">
+             <i class="bi bi-people"></i> Manage Users
           </a>
         </nav>
         
         <div class="user-info">
           <div class="d-grid">
             <button id="admin-logout-btn" class="btn btn-outline-light btn-sm">
-              <i class="bi bi-box-arrow-left"></i> Đăng xuất
+              <i class="bi bi-box-arrow-left"></i> Logout
             </button>
           </div>
         </div>
@@ -37,7 +37,7 @@ const AdminSidebar = {
     const logoutBtn = document.getElementById('admin-logout-btn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', () => {
-            if(confirm('Bạn có chắc chắn muốn đăng xuất?')) {
+            if(confirm('Are you sure you want to logout?')) {
                 localStorage.removeItem('user');
                 window.location.href = '/';
             }

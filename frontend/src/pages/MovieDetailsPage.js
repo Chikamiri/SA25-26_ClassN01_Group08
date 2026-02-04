@@ -6,8 +6,8 @@ const MovieDetailsPage = {
       <div class="container py-4">
         <nav aria-label="breadcrumb" class="mb-4">
           <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="/movies">Phim</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Chi tiết</li>
+            <li class="breadcrumb-item"><a href="/movies">Movies</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Details</li>
           </ol>
         </nav>
         <div id="movie-detail-container">
@@ -26,7 +26,7 @@ const MovieDetailsPage = {
     const id = pathParts[2];
 
     if (!id) {
-        container.innerHTML = '<div class="alert alert-warning">Không tìm thấy ID phim.</div>';
+        container.innerHTML = '<div class="alert alert-warning">Movie ID not found.</div>';
         return;
     }
 
@@ -37,7 +37,7 @@ const MovieDetailsPage = {
         ]);
 
         if (!movie) {
-             container.innerHTML = '<div class="alert alert-danger">Phim không tìm thấy.</div>';
+             container.innerHTML = '<div class="alert alert-danger">Movie not found.</div>';
              return;
         }
 
@@ -58,7 +58,7 @@ const MovieDetailsPage = {
         // Helper to format date label
         const getDayLabel = (dateStr) => {
             const date = new Date(dateStr);
-            const days = ['CN', 'Th 2', 'Th 3', 'Th 4', 'Th 5', 'Th 6', 'Th 7'];
+            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
             return {
                 day: days[date.getDay()],
                 date: `${date.getDate()}/${date.getMonth() + 1}`
@@ -68,7 +68,7 @@ const MovieDetailsPage = {
         // Render function for Schedule
         const renderSchedule = () => {
              if (dates.length === 0) {
-                 return '<div class="p-4 bg-light rounded text-center text-muted">Hiện không có suất chiếu nào.</div>';
+                 return '<div class="p-4 bg-light rounded text-center text-muted">No showtimes available.</div>';
              }
 
              // Tabs HTML
@@ -94,7 +94,7 @@ const MovieDetailsPage = {
                             <div class="col-6 col-sm-4 col-md-3">
                                 <a href="/book/${st.id}" class="time-card">
                                     <span class="time">${st.time}</span>
-                                    <small class="text-muted d-block">${st.price.toLocaleString()}đ</small>
+                                    <small class="text-muted d-block">${st.price.toLocaleString()} VND</small>
                                 </a>
                             </div>
                         `).join('')}
@@ -128,13 +128,13 @@ const MovieDetailsPage = {
                 <h1 class="fw-bold mb-2">${movie.title}</h1>
                 <div class="mb-4">
                   <span class="badge bg-primary me-2">${movie.genre}</span>
-                  <span class="badge bg-secondary me-2">${movie.duration} phút</span>
-                  <span class="text-muted small">Khởi chiếu: ${new Date(movie.release_date).toLocaleDateString()}</span>
+                  <span class="badge bg-secondary me-2">${movie.duration} minutes</span>
+                  <span class="text-muted small">Release Date: ${new Date(movie.release_date).toLocaleDateString()}</span>
                 </div>
                 
-                <p class="lead text-muted mb-5">${movie.description || 'Chưa có mô tả cho bộ phim này.'}</p>
+                <p class="lead text-muted mb-5">${movie.description || 'No description available for this movie.'}</p>
                 
-                <h4 class="fw-bold mb-4">Lịch Chiếu</h4>
+                <h4 class="fw-bold mb-4">Showtimes</h4>
                 ${renderSchedule()}
               </div>
             </div>
@@ -159,7 +159,7 @@ const MovieDetailsPage = {
         });
 
     } catch (err) {
-        container.innerHTML = `<div class="alert alert-danger">Lỗi: ${err.message}</div>`;
+        container.innerHTML = `<div class="alert alert-danger">Error: ${err.message}</div>`;
     }
   }
 };

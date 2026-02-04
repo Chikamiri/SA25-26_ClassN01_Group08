@@ -9,9 +9,9 @@ const AdminShowtimesPage = {
         <div class="admin-content">
             <div class="container-fluid">
                 <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h2 class="fw-bold mb-0">Quản lý Lịch Chiếu</h2>
+                    <h2 class="fw-bold mb-0">Manage Showtimes</h2>
                     <button id="add-showtime-btn" class="btn btn-primary shadow-sm">
-                        <i class="bi bi-plus-lg"></i> Thêm Lịch Chiếu
+                        <i class="bi bi-plus-lg"></i> Add Showtime
                     </button>
                 </div>
 
@@ -21,11 +21,11 @@ const AdminShowtimesPage = {
                             <table class="table table-hover align-middle mb-0">
                                 <thead class="table-light">
                                     <tr>
-                                        <th class="ps-4">Phim</th>
-                                        <th>Bắt Đầu</th>
-                                        <th>Kết Thúc</th>
-                                        <th>Giá Vé (VND)</th>
-                                        <th class="text-end pe-4">Hành Động</th>
+                                        <th class="ps-4">Movie</th>
+                                        <th>Start</th>
+                                        <th>End</th>
+                                        <th>Ticket Price (VND)</th>
+                                        <th class="text-end pe-4">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody id="admin-showtimes-list">
@@ -41,35 +41,35 @@ const AdminShowtimesPage = {
                     <div class="modal-dialog modal-dialog-centered">
                         <div class="modal-content">
                             <div class="modal-header bg-light">
-                                <h5 class="modal-title fw-bold" id="modal-title">Thêm Lịch Chiếu</h5>
+                                <h5 class="modal-title fw-bold" id="modal-title">Add Showtime</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
                             <div class="modal-body p-4">
                                 <form id="showtime-form">
                                     <input type="hidden" id="showtime-id">
                                     <div class="mb-3">
-                                        <label class="form-label text-muted small fw-bold text-uppercase">Phim</label>
+                                        <label class="form-label text-muted small fw-bold text-uppercase">Movie</label>
                                         <select id="showtime-movie" class="form-select" required>
-                                            <option value="">-- Chọn phim --</option>
+                                            <option value="">-- Select movie --</option>
                                         </select>
                                     </div>
                                     <div class="mb-3">
-                                        <label class="form-label text-muted small fw-bold text-uppercase">Phòng Chiếu</label>
+                                        <label class="form-label text-muted small fw-bold text-uppercase">Room</label>
                                         <select id="showtime-room" class="form-select" required>
-                                            <option value="">-- Chọn phòng --</option>
+                                            <option value="">-- Select room --</option>
                                         </select>
                                     </div>
                                     <div class="mb-3">
-                                        <label class="form-label text-muted small fw-bold text-uppercase">Thời gian bắt đầu</label>
+                                        <label class="form-label text-muted small fw-bold text-uppercase">Start time</label>
                                         <input type="datetime-local" id="showtime-start" class="form-control" required>
                                     </div>
                                     <div class="mb-3">
-                                        <label class="form-label text-muted small fw-bold text-uppercase">Giá vé</label>
+                                        <label class="form-label text-muted small fw-bold text-uppercase">Price</label>
                                         <input type="number" id="showtime-price" class="form-control" required min="0">
                                     </div>
                                     <div class="text-end mt-4">
-                                        <button type="button" class="btn btn-light me-2" data-bs-dismiss="modal">Hủy</button>
-                                        <button type="submit" class="btn btn-primary px-4">Lưu</button>
+                                        <button type="button" class="btn btn-light me-2" data-bs-dismiss="modal">Cancel</button>
+                                        <button type="submit" class="btn btn-primary px-4">Save</button>
                                     </div>
                                 </form>
                             </div>
@@ -124,14 +124,14 @@ const AdminShowtimesPage = {
     const renderList = (showtimes) => {
         showtimesData = showtimes;
         if (showtimes.length === 0) {
-            list.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-5">Chưa có lịch chiếu nào.</td></tr>';
+            list.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-5">No showtimes yet.</td></tr>';
             return;
         }
 
         list.innerHTML = showtimes.map(st => {
             const movie = moviesData.find(m => m.id === st.movie_id);
             const room = roomsData.find(r => r.id === st.room_id);
-            const movieTitle = movie ? movie.title : `<span class="text-muted">Movie ID ${st.movie_id} (Đã xóa)</span>`;
+            const movieTitle = movie ? movie.title : `<span class="text-muted">Movie ID ${st.movie_id} (Deleted)</span>`;
             const roomName = room ? room.name : `<span class="text-muted">N/A</span>`;
             
             return `
@@ -175,16 +175,16 @@ const AdminShowtimesPage = {
             roomsData = rooms;
             
             // Populate Movie Select
-            movieSelect.innerHTML = '<option value="">-- Chọn phim --</option>' + 
+            movieSelect.innerHTML = '<option value="">-- Select movie --</option>' + 
                 movies.map(m => `<option value="${m.id}">${m.title}</option>`).join('');
 
             // Populate Room Select
-            roomSelect.innerHTML = '<option value="">-- Chọn phòng --</option>' + 
+            roomSelect.innerHTML = '<option value="">-- Select room --</option>' + 
                 rooms.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
 
             renderList(showtimes);
         } catch (err) {
-            list.innerHTML = `<tr><td colspan="5" class="text-center text-danger py-4">Lỗi tải dữ liệu: ${err.message}</td></tr>`;
+            list.innerHTML = `<tr><td colspan="5" class="text-center text-danger py-4">Error loading data: ${err.message}</td></tr>`;
         }
     };
 
@@ -197,7 +197,7 @@ const AdminShowtimesPage = {
             startInput.value = toLocalISO(showtime.start_time);
             priceInput.value = showtime.price;
             
-            modalTitle.innerText = 'Sửa Lịch Chiếu';
+            modalTitle.innerText = 'Edit Showtime';
             showtimeModal.show();
         }
     };
@@ -205,7 +205,7 @@ const AdminShowtimesPage = {
     addBtn.addEventListener('click', () => {
         form.reset();
         idInput.value = '';
-        modalTitle.innerText = 'Thêm Lịch Chiếu';
+        modalTitle.innerText = 'Add Showtime';
         showtimeModal.show();
     });
 
@@ -218,7 +218,7 @@ const AdminShowtimesPage = {
         const selectedMovie = moviesData.find(m => m.id === movieId);
         
         if (!selectedMovie) {
-            alert("Vui lòng chọn phim hợp lệ");
+            alert("Please select a valid movie");
             return;
         }
 
@@ -242,17 +242,17 @@ const AdminShowtimesPage = {
             showtimeModal.hide();
             loadData();
         } catch (err) {
-            alert('Lỗi: ' + err.message);
+            alert('Error: ' + err.message);
         }
     });
 
     const handleDelete = async (id) => {
-        if (confirm('Bạn có chắc chắn muốn xóa lịch chiếu này?')) {
+        if (confirm('Are you sure you want to delete this showtime?')) {
             try {
                 await deleteShowtime(id);
                 loadData();
             } catch (err) {
-                alert('Lỗi: ' + err.message);
+                alert('Error: ' + err.message);
             }
         }
     };

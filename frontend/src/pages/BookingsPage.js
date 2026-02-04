@@ -8,7 +8,7 @@ const BookingsPage = {
         return `
           <div class="container py-5 text-center">
             <div class="alert alert-warning d-inline-block">
-              Bạn cần <a href="/login" class="alert-link">đăng nhập</a> để đặt vé.
+              You need to <a href="/login" class="alert-link">login</a> to book tickets.
             </div>
           </div>
         `;
@@ -24,21 +24,21 @@ const BookingsPage = {
                 <!-- Booking Summary Card -->
                 <div class="card shadow-sm border-0 mb-3 sticky-top" style="top: 2rem; z-index: 20;">
                     <div class="card-header bg-primary text-white border-bottom-0 py-3">
-                        <h5 class="fw-bold text-uppercase mb-0 text-center"><i class="bi bi-ticket-perforated"></i> Đặt Vé</h5>
+                        <h5 class="fw-bold text-uppercase mb-0 text-center"><i class="bi bi-ticket-perforated"></i> Book Ticket</h5>
                         <div id="room-name-display" class="text-center small text-white-50 mt-1"></div>
                     </div>
                     <div class="card-body">
                         <div class="mb-3">
-                            <small class="text-muted d-block">Ghế đang chọn:</small>
-                            <div id="selected-seat-display" class="fw-bold text-break text-primary">Chưa chọn</div>
+                            <small class="text-muted d-block">Selected seats:</small>
+                            <div id="selected-seat-display" class="fw-bold text-break text-primary">None selected</div>
                         </div>
                         <div class="mb-4">
-                            <small class="text-muted d-block">Tạm tính:</small>
+                            <small class="text-muted d-block">Subtotal:</small>
                             <h4 id="total-price-display" class="fw-bold text-success mb-0">0 VND</h4>
                         </div>
                         <div class="d-grid">
                             <button id="confirm-booking-btn" class="btn btn-primary fw-bold py-2" disabled>
-                                Đặt Vé Ngay
+                                Book Now
                             </button>
                         </div>
                         <div id="booking-error" class="text-danger mt-2 text-center small"></div>
@@ -48,7 +48,7 @@ const BookingsPage = {
                 <!-- Schedule Picker -->
                 <div class="card shadow-sm border-0">
                     <div class="card-header bg-white border-bottom-0 pt-3">
-                        <h6 class="fw-bold text-uppercase mb-0 text-center text-muted">Lịch Chiếu Khác</h6>
+                        <h6 class="fw-bold text-uppercase mb-0 text-center text-muted">Other Showtimes</h6>
                     </div>
                     <div class="card-body p-2" id="schedule-picker-container">
                          <div class="text-center py-3"><div class="spinner-border spinner-border-sm text-secondary" role="status"></div></div>
@@ -61,12 +61,12 @@ const BookingsPage = {
                 <div id="booking-container" class="card shadow-sm border-0 bg-white">
                     <div class="card-body p-4">
                         <div class="text-center mb-4">
-                            <h2 class="fw-bold">Sơ Đồ Ghế</h2>
-                            <p class="text-muted small">Màn hình phía trước - Vui lòng chọn ghế</p>
+                            <h2 class="fw-bold">Seat Map</h2>
+                            <p class="text-muted small">Screen at the front - Please select seats</p>
                         </div>
 
                         <!-- Cinema Screen -->
-                        <div class="cinema-screen shadow-sm">MÀN HÌNH</div>
+                        <div class="cinema-screen shadow-sm">SCREEN</div>
                         
                         <!-- Seat Map (Scrollable for IMAX) -->
                         <div class="table-responsive mb-5" style="overflow-x: auto;">
@@ -78,20 +78,20 @@ const BookingsPage = {
                         <!-- Legend -->
                         <div class="d-flex justify-content-center gap-4 mb-3 text-muted small flex-wrap">
                             <div class="d-flex align-items-center">
-                                <span class="seat-legend-item" style="background-color: #fff;"></span> Trống
+                                <span class="seat-legend-item" style="background-color: #fff;"></span> Available
                             </div>
                             <div class="d-flex align-items-center">
-                                <span class="seat-legend-item" style="background-color: var(--primary-color); border-color: var(--primary-color);"></span> Đang chọn
+                                <span class="seat-legend-item" style="background-color: var(--primary-color); border-color: var(--primary-color);"></span> Selected
                             </div>
                             <div class="d-flex align-items-center">
-                                <span class="seat-legend-item booked"></span> Đã đặt
+                                <span class="seat-legend-item booked"></span> Booked
                             </div>
                         </div>
                     </div>
                 </div>
                 
                 <div class="mt-4 text-center">
-                    <a href="/movies" class="text-decoration-none text-muted small">&larr; Quay lại danh sách phim</a>
+                    <a href="/movies" class="text-decoration-none text-muted small">&larr; Back to movie list</a>
                 </div>
             </div>
         </div>
@@ -144,7 +144,7 @@ const BookingsPage = {
                      loadSchedulePicker(currentShowtime.movie_id, currentShowtime.start_time);
                 }
             } else {
-                 schedulePickerContainer.innerHTML = '<p class="text-center text-muted small">Không tải được thông tin.</p>';
+                 schedulePickerContainer.innerHTML = '<p class="text-center text-muted small">Could not load information.</p>';
             }
         } catch (e) {
             console.error("Error loading page data:", e);
@@ -165,7 +165,7 @@ const BookingsPage = {
 
             const getDayLabel = (dateStr) => {
                 const date = new Date(dateStr);
-                const days = ['Chủ Nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'];
+                const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
                 return `${days[date.getDay()]}, ${date.getDate()}/${date.getMonth() + 1}`;
             };
 
@@ -198,7 +198,7 @@ const BookingsPage = {
                 `;
             }).join('');
             
-            schedulePickerContainer.innerHTML = html || '<p class="text-center text-muted small">Không có lịch chiếu khác</p>';
+            schedulePickerContainer.innerHTML = html || '<p class="text-center text-muted small">No other showtimes</p>';
         } catch (e) {
             console.error(e);
         }
@@ -233,7 +233,7 @@ const BookingsPage = {
             totalPriceDisplay.innerText = total.toLocaleString() + ' VND';
             confirmBtn.disabled = false;
         } else {
-            selectedDisplay.innerText = 'Chưa chọn';
+            selectedDisplay.innerText = 'None selected';
             totalPriceDisplay.innerText = '0 VND';
             confirmBtn.disabled = true;
         }
@@ -314,7 +314,7 @@ const BookingsPage = {
                 });
             });
         } catch (err) {
-            seatMap.innerHTML = `<div class="alert alert-danger">Lỗi tải sơ đồ ghế: ${err.message}</div>`;
+            seatMap.innerHTML = `<div class="alert alert-danger">Error loading seat map: ${err.message}</div>`;
         }
     };
 
@@ -322,7 +322,7 @@ const BookingsPage = {
         if (selectedSeats.length === 0) return;
 
         confirmBtn.disabled = true;
-        confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Đang xử lý...';
+        confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processing...';
         errorMsg.innerText = '';
 
         try {
@@ -347,9 +347,9 @@ const BookingsPage = {
             window.location.href = `/payment?booking_ids=${currentBookingIds.join(',')}&amount=${totalPrice}`;
 
         } catch (err) {
-            errorMsg.innerText = err.message || 'Đã xảy ra lỗi khi đặt vé.';
+            errorMsg.innerText = err.message || 'An error occurred while booking.';
             confirmBtn.disabled = false;
-            confirmBtn.innerText = 'Tiếp tục đặt vé';
+            confirmBtn.innerText = 'Continue booking';
         }
     });
 

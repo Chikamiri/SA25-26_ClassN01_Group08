@@ -9,8 +9,8 @@ const PaymentPage = {
     if (!bookingIds) {
         return `
             <div class="container py-5 text-center">
-                <div class="alert alert-danger">Không tìm thấy thông tin đặt vé.</div>
-                <a href="/" class="btn btn-primary">Về Trang Chủ</a>
+                <div class="alert alert-danger">Booking information not found.</div>
+                <a href="/" class="btn btn-primary">Back to Home</a>
             </div>
         `;
     }
@@ -21,12 +21,12 @@ const PaymentPage = {
             <div class="col-md-6">
                 <div class="card shadow border-0">
                     <div class="card-header bg-primary text-white py-3">
-                        <h4 class="mb-0 fw-bold"><i class="bi bi-credit-card"></i> Cổng Thanh Toán</h4>
+                        <h4 class="mb-0 fw-bold"><i class="bi bi-credit-card"></i> Payment Gateway</h4>
                     </div>
                     <div class="card-body p-4">
                         <div class="alert alert-info mb-4">
-                            Bạn đang thanh toán cho các mã đặt vé: <strong>#${bookingIds.split(',').join(', #')}</strong><br>
-                            Tổng số tiền: <strong class="fs-5 text-success">${parseInt(amount || 0).toLocaleString()} VND</strong>
+                            You are paying for booking IDs: <strong>#${bookingIds.split(',').join(', #')}</strong><br>
+                            Total amount: <strong class="fs-5 text-success">${parseInt(amount || 0).toLocaleString()} VND</strong>
                         </div>
 
                         <div id="payment-content" class="text-center py-4">
@@ -43,17 +43,17 @@ const PaymentPage = {
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title fw-bold">Thêm Phương Thức Thanh Toán</h5>
+                    <h5 class="modal-title fw-bold">Add Payment Method</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <form id="add-card-form">
                         <div class="mb-3">
-                            <label class="form-label">Tên chủ thẻ</label>
+                            <label class="form-label">Cardholder Name</label>
                             <input type="text" id="card-holder" class="form-control" placeholder="NGUYEN VAN A" required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Số thẻ</label>
+                            <label class="form-label">Card Number</label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="bi bi-credit-card-2-front"></i></span>
                                 <input type="text" id="card-number" class="form-control" placeholder="0000 0000 0000 0000" maxlength="19" required>
@@ -61,7 +61,7 @@ const PaymentPage = {
                         </div>
                         <div class="row">
                             <div class="col-6 mb-3">
-                                <label class="form-label">Ngày hết hạn</label>
+                                <label class="form-label">Expiration Date</label>
                                 <input type="text" class="form-control" placeholder="MM/YY" maxlength="5" required>
                             </div>
                             <div class="col-6 mb-3">
@@ -70,8 +70,8 @@ const PaymentPage = {
                             </div>
                         </div>
                         <div class="d-flex justify-content-end gap-2 mt-4">
-                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Hủy</button>
-                            <button type="submit" class="btn btn-primary fw-bold px-4">Lưu & Tiếp Tục</button>
+                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary fw-bold px-4">Save & Continue</button>
                         </div>
                     </form>
                 </div>
@@ -99,9 +99,9 @@ const PaymentPage = {
     const showNoCardState = () => {
         contentDiv.innerHTML = `
             <div class="py-3">
-                <p class="text-muted mb-4">Bạn chưa chọn phương thức thanh toán.</p>
+                <p class="text-muted mb-4">You haven't selected a payment method.</p>
                 <button id="retry-add-card-btn" class="btn btn-primary fw-bold">
-                    + Thêm thẻ thanh toán
+                    + Add Payment Card
                 </button>
             </div>
         `;
@@ -111,15 +111,15 @@ const PaymentPage = {
     const processTxn = async (btn) => {
         btn.disabled = true;
         const originalText = btn.innerText;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Đang xử lý...';
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processing...';
 
         try {
             const promises = bookingIds.map(id => processPayment({ booking_id: id }));
             await Promise.all(promises);
-            alert('Thanh toán thành công!');
+            alert('Payment successful!');
             window.location.href = '/my-bookings';
         } catch (err) {
-            alert('Lỗi thanh toán: ' + err.message);
+            alert('Payment error: ' + err.message);
             btn.disabled = false;
             btn.innerText = originalText;
         }
@@ -144,17 +144,17 @@ const PaymentPage = {
         `).join('');
 
         contentDiv.innerHTML = `
-            <h6 class="text-start mb-3 fw-bold">Chọn phương thức thanh toán:</h6>
+            <h6 class="text-start mb-3 fw-bold">Select payment method:</h6>
             <div class="mb-4 text-start">
                 ${cardsHtml}
             </div>
             
             <div class="d-grid gap-2">
                 <button id="pay-saved-btn" class="btn btn-success btn-lg fw-bold shadow">
-                    Xác nhận Thanh toán
+                    Confirm Payment
                 </button>
                 <button id="use-new-card-btn" class="btn btn-outline-secondary btn-sm mt-2">
-                    + Thêm / Dùng thẻ mới
+                    + Add / Use New Card
                 </button>
             </div>
         `;
@@ -195,7 +195,7 @@ const PaymentPage = {
 
     } catch (err) {
         console.error(err);
-        contentDiv.innerHTML = '<div class="alert alert-warning">Không thể tải phương thức thanh toán.</div>';
+        contentDiv.innerHTML = '<div class="alert alert-warning">Could not load payment methods.</div>';
     }
 
     // Handle Add Card Form
@@ -212,7 +212,7 @@ const PaymentPage = {
             savedCards = await getPaymentMethods();
             renderConfirmState(savedCards);
         } catch (err) {
-            alert('Lỗi lưu thẻ: ' + err.message);
+            alert('Error saving card: ' + err.message);
         }
     });
   }

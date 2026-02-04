@@ -9,7 +9,7 @@ const ProfilePage = {
                 <!-- User Info -->
                 <div class="card shadow-sm border-0 mb-4">
                     <div class="card-header bg-white py-3">
-                        <h4 class="mb-0 fw-bold">Thông tin cá nhân</h4>
+                        <h4 class="mb-0 fw-bold">Personal Information</h4>
                     </div>
                     <div class="card-body p-4" id="profile-content">
                         <div class="text-center py-4">
@@ -21,13 +21,13 @@ const ProfilePage = {
                 <!-- Payment Methods -->
                 <div class="card shadow-sm border-0">
                     <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                        <h4 class="mb-0 fw-bold">Phương thức thanh toán đã lưu</h4>
+                        <h4 class="mb-0 fw-bold">Saved Payment Methods</h4>
                         <button id="add-card-btn" class="btn btn-sm btn-success fw-bold">
-                            <i class="bi bi-plus-lg"></i> Thêm Thẻ
+                            <i class="bi bi-plus-lg"></i> Add Card
                         </button>
                     </div>
                     <div class="card-body p-4" id="payment-methods-content">
-                         <p class="text-muted">Đang tải...</p>
+                         <p class="text-muted">Loading...</p>
                     </div>
                 </div>
             </div>
@@ -39,22 +39,22 @@ const ProfilePage = {
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title fw-bold">Thêm Thẻ Mới</h5>
+                    <h5 class="modal-title fw-bold">Add New Card</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <form id="add-card-form">
                         <div class="mb-3">
-                            <label class="form-label">Tên chủ thẻ</label>
+                            <label class="form-label">Cardholder Name</label>
                             <input type="text" id="add-card-holder" class="form-control" placeholder="NGUYEN VAN A" required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Số thẻ</label>
+                            <label class="form-label">Card Number</label>
                             <input type="text" id="add-card-number" class="form-control" placeholder="0000 0000 0000 0000" maxlength="19" required>
                         </div>
                         <div class="text-end mt-4">
-                            <button type="button" class="btn btn-light me-2" data-bs-dismiss="modal">Hủy</button>
-                            <button type="submit" class="btn btn-success px-4 fw-bold">Lưu Thẻ</button>
+                            <button type="button" class="btn btn-light me-2" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-success px-4 fw-bold">Save Card</button>
                         </div>
                     </form>
                 </div>
@@ -67,23 +67,23 @@ const ProfilePage = {
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Cập nhật thông tin thẻ</h5>
+                    <h5 class="modal-title">Update Card Information</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <form id="edit-card-form">
                         <input type="hidden" id="edit-card-id">
                         <div class="mb-3">
-                            <label class="form-label">Số thẻ (Không thể sửa)</label>
+                            <label class="form-label">Card Number (Cannot be edited)</label>
                             <input type="text" id="edit-card-number" class="form-control" disabled>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Tên chủ thẻ</label>
+                            <label class="form-label">Cardholder Name</label>
                             <input type="text" id="edit-card-holder" class="form-control" required>
                         </div>
                         <div class="text-end">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                            <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
                         </div>
                     </form>
                 </div>
@@ -134,19 +134,19 @@ const ProfilePage = {
                     <input type="text" class="form-control" value="${user.email}" disabled>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label text-muted">Mã Thành Viên (ID)</label>
+                    <label class="form-label text-muted">Member ID</label>
                     <input type="text" class="form-control" value="${user.id}" disabled>
                 </div>
             </form>
             
             <div class="mt-4 text-center">
                 <a href="/my-bookings" class="btn btn-outline-primary">
-                    <i class="bi bi-ticket-perforated"></i> Xem Lịch Sử Đặt Vé
+                    <i class="bi bi-ticket-perforated"></i> View Booking History
                 </a>
             </div>
         `;
     } catch (err) {
-        profileContainer.innerHTML = `<div class="alert alert-danger">Không thể tải thông tin: ${err.message}</div>`;
+        profileContainer.innerHTML = `<div class="alert alert-danger">Could not load info: ${err.message}</div>`;
     }
 
     // Load Payment Methods
@@ -154,7 +154,7 @@ const ProfilePage = {
         try {
             savedCards = await getPaymentMethods();
             if (!savedCards || savedCards.length === 0) {
-                paymentContainer.innerHTML = '<p class="text-muted text-center py-3">Bạn chưa lưu phương thức thanh toán nào.</p>';
+                paymentContainer.innerHTML = '<p class="text-muted text-center py-3">You have no saved payment methods.</p>';
                 return;
             }
 
@@ -171,10 +171,10 @@ const ProfilePage = {
                             </div>
                             <div>
                                 <button class="btn btn-outline-primary btn-sm me-2 edit-card-btn" data-id="${card.id}">
-                                    <i class="bi bi-pencil"></i> Sửa
+                                    <i class="bi bi-pencil"></i> Edit
                                 </button>
                                 <button class="btn btn-outline-danger btn-sm delete-card-btn" data-id="${card.id}">
-                                    <i class="bi bi-trash"></i> Xóa
+                                    <i class="bi bi-trash"></i> Delete
                                 </button>
                             </div>
                         </div>
@@ -186,12 +186,12 @@ const ProfilePage = {
             document.querySelectorAll('.delete-card-btn').forEach(btn => {
                 btn.addEventListener('click', async (e) => {
                     const id = e.currentTarget.dataset.id;
-                    if (confirm('Bạn có chắc chắn muốn xóa thẻ này?')) {
+                    if (confirm('Are you sure you want to delete this card?')) {
                         try {
                             await deletePaymentMethod(id);
                             loadCards(); // Reload
                         } catch (err) {
-                            alert('Lỗi xóa thẻ: ' + err.message);
+                            alert('Error deleting card: ' + err.message);
                         }
                     }
                 });
@@ -212,7 +212,7 @@ const ProfilePage = {
             });
 
         } catch (err) {
-            paymentContainer.innerHTML = `<div class="alert alert-danger">Lỗi tải danh sách thẻ: ${err.message}</div>`;
+            paymentContainer.innerHTML = `<div class="alert alert-danger">Error loading cards: ${err.message}</div>`;
         }
     };
 
@@ -231,9 +231,9 @@ const ProfilePage = {
             });
             addModal.hide();
             loadCards();
-            alert('Thêm thẻ thành công!');
+            alert('Card added successfully!');
         } catch (err) {
-            alert('Lỗi thêm thẻ: ' + err.message);
+            alert('Error adding card: ' + err.message);
         }
     });
 
@@ -247,9 +247,9 @@ const ProfilePage = {
             await updatePaymentMethod(id, { card_holder: holder });
             editModal.hide();
             loadCards();
-            alert('Cập nhật thành công!');
+            alert('Update successful!');
         } catch (err) {
-            alert('Lỗi cập nhật: ' + err.message);
+            alert('Error updating: ' + err.message);
         }
     });
 
