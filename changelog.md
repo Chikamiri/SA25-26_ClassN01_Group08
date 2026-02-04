@@ -82,7 +82,7 @@
 - Big UI changes.
 - Add '.db' to .gitignore
 
-## 4/2/2026, 18:00
+## 4/2/2026
 
 - Language to English
 - Redesign booking UI with tabbed Date Ribbon and Time Grid
@@ -96,3 +96,4 @@
 - Create `reset_db.py` and update `seed_db.py`
 - Various bug fixes and clean-up
 - Add '.db' to .gitignore
+- Update admin panel

@@ -1,4 +1,4 @@
-import { getMovies, createMovie, updateMovie, deleteMovie } from '../api/apiClient.js';
+import { getMovies, createMovie, updateMovie, deleteMovie, getAllBookings, getShowtimes } from '../api/apiClient.js';
 import AdminSidebar from '../components/AdminSidebar.js';
 
 const AdminMoviesPage = {
@@ -25,6 +25,7 @@ const AdminMoviesPage = {
                                         <th>Genre</th>
                                         <th>Duration</th>
                                         <th>Release Date</th>
+                                        <th>Total Revenue (VND)</th>
                                         <th class="text-end pe-4">Actions</th>
                                     </tr>
                                 </thead>
@@ -98,29 +99,43 @@ const AdminMoviesPage = {
     const releaseDateInput = document.getElementById('movie-release-date');
 
     let moviesData = [];
+    let bookingsData = [];
+    let showtimesData = [];
 
     const renderList = (movies) => {
         moviesData = movies;
         if (movies.length === 0) {
-            list.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-5">No movies yet.</td></tr>';
+            list.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-5">No movies yet.</td></tr>';
             return;
         }
-        list.innerHTML = movies.map(movie => `
-          <tr>
-            <td class="ps-4 fw-bold text-primary">${movie.title}</td>
-            <td><span class="badge bg-light text-dark border">${movie.genre}</span></td>
-            <td>${movie.duration} minutes</td>
-            <td>${new Date(movie.release_date).toLocaleDateString()}</td>
-            <td class="text-end pe-4">
-                <button class="btn btn-sm btn-outline-primary me-2 edit-btn" data-id="${movie.id}">
-                    <i class="bi bi-pencil"></i>
-                </button>
-                <button class="btn btn-sm btn-outline-danger delete-btn" data-id="${movie.id}">
-                    <i class="bi bi-trash"></i>
-                </button>
-            </td>
-          </tr>
-        `).join('');
+        list.innerHTML = movies.map(movie => {
+            // Find showtimes for this movie
+            const movieShowtimes = showtimesData.filter(st => st.movie_id === movie.id);
+            const showtimeIds = movieShowtimes.map(st => st.id);
+            
+            // Sum revenue of bookings for these showtimes
+            const revenue = bookingsData
+                .filter(b => showtimeIds.includes(b.showtime_id))
+                .reduce((sum, b) => sum + (b.amount || 0), 0);
+
+            return `
+              <tr>
+                <td class="ps-4 fw-bold text-primary">${movie.title}</td>
+                <td><span class="badge bg-light text-dark border">${movie.genre}</span></td>
+                <td>${movie.duration} minutes</td>
+                <td>${new Date(movie.release_date).toLocaleDateString()}</td>
+                <td class="fw-bold text-success">${revenue.toLocaleString()}</td>
+                <td class="text-end pe-4">
+                    <button class="btn btn-sm btn-outline-primary me-2 edit-btn" data-id="${movie.id}">
+                        <i class="bi bi-pencil"></i> Edit
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger delete-btn" data-id="${movie.id}">
+                        <i class="bi bi-trash"></i> Delete
+                    </button>
+                </td>
+              </tr>
+            `;
+        }).join('');
 
         // Attach events
         document.querySelectorAll('.edit-btn').forEach(btn => {
@@ -133,10 +148,16 @@ const AdminMoviesPage = {
 
     const fetchMovies = async () => {
         try {
-            const movies = await getMovies();
+            const [movies, bookings, showtimes] = await Promise.all([
+                getMovies(),
+                getAllBookings(),
+                getShowtimes()
+            ]);
+            bookingsData = bookings;
+            showtimesData = showtimes;
             renderList(movies);
         } catch (err) {
-            list.innerHTML = `<tr><td colspan="5" class="text-center text-danger py-4">Error loading data: ${err.message}</td></tr>`;
+            list.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-4">Error loading data: ${err.message}</td></tr>`;
         }
     };
 

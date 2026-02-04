@@ -1,4 +1,4 @@
-import { getShowtimes, getMovies, createShowtime, updateShowtime, deleteShowtime, getRooms } from '../api/apiClient.js';
+import { getShowtimes, getMovies, createShowtime, updateShowtime, deleteShowtime, getRooms, getAllBookings } from '../api/apiClient.js';
 import AdminSidebar from '../components/AdminSidebar.js';
 
 const AdminShowtimesPage = {
@@ -25,6 +25,7 @@ const AdminShowtimesPage = {
                                         <th>Start</th>
                                         <th>End</th>
                                         <th>Ticket Price (VND)</th>
+                                        <th>Revenue (VND)</th>
                                         <th class="text-end pe-4">Actions</th>
                                     </tr>
                                 </thead>
@@ -102,6 +103,7 @@ const AdminShowtimesPage = {
     let showtimesData = [];
     let moviesData = [];
     let roomsData = [];
+    let bookingsData = [];
 
     const toLocalISO = (dateStr) => {
         if (!dateStr) return '';
@@ -124,7 +126,7 @@ const AdminShowtimesPage = {
     const renderList = (showtimes) => {
         showtimesData = showtimes;
         if (showtimes.length === 0) {
-            list.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-5">No showtimes yet.</td></tr>';
+            list.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-5">No showtimes yet.</td></tr>';
             return;
         }
 
@@ -134,6 +136,11 @@ const AdminShowtimesPage = {
             const movieTitle = movie ? movie.title : `<span class="text-muted">Movie ID ${st.movie_id} (Deleted)</span>`;
             const roomName = room ? room.name : `<span class="text-muted">N/A</span>`;
             
+            // Calculate Revenue
+            const revenue = bookingsData
+                .filter(b => b.showtime_id === st.id)
+                .reduce((sum, b) => sum + (b.amount || 0), 0);
+
             return `
               <tr>
                 <td class="ps-4 fw-bold text-primary">
@@ -143,12 +150,13 @@ const AdminShowtimesPage = {
                 <td>${st.start_time}</td>
                 <td>${st.end_time}</td>
                 <td>${st.price ? st.price.toLocaleString() : '0'}</td>
+                <td class="fw-bold text-success">${revenue.toLocaleString()}</td>
                 <td class="text-end pe-4">
                     <button class="btn btn-sm btn-outline-primary me-2 edit-btn" data-id="${st.id}">
-                        <i class="bi bi-pencil"></i>
+                        <i class="bi bi-pencil"></i> Edit
                     </button>
                     <button class="btn btn-sm btn-outline-danger delete-btn" data-id="${st.id}">
-                        <i class="bi bi-trash"></i>
+                        <i class="bi bi-trash"></i> Delete
                     </button>
                 </td>
               </tr>
@@ -166,13 +174,15 @@ const AdminShowtimesPage = {
 
     const loadData = async () => {
         try {
-            const [movies, showtimes, rooms] = await Promise.all([
+            const [movies, showtimes, rooms, bookings] = await Promise.all([
                 getMovies(), 
                 getShowtimes(),
-                getRooms()
+                getRooms(),
+                getAllBookings()
             ]);
             moviesData = movies;
             roomsData = rooms;
+            bookingsData = bookings;
             
             // Populate Movie Select
             movieSelect.innerHTML = '<option value="">-- Select movie --</option>' + 

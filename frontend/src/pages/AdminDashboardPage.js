@@ -1,6 +1,8 @@
 
 import AdminSidebar from '../components/AdminSidebar.js';
-import { getMovies, getAllBookings, getAllUsers } from '../api/apiClient.js';
+import { getMovies, getAllBookings, getAllUsers, getShowtimes } from '../api/apiClient.js';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const AdminDashboardPage = {
   render: async () => {
@@ -26,18 +28,26 @@ const AdminDashboardPage = {
     let usersCount = 0;
     let recentActivity = [];
 
+    let movies = [];
+    let bookings = [];
+    let showtimes = [];
+
     try {
-        const [movies, bookings, users] = await Promise.all([
+        const [m, b, u, s] = await Promise.all([
             getMovies(),
             getAllBookings(),
-            getAllUsers()
+            getAllUsers(),
+            getShowtimes()
         ]);
+        movies = m;
+        bookings = b;
+        showtimes = s;
 
         moviesCount = movies.length;
         
         if (Array.isArray(bookings)) {
             bookingsCount = bookings.length;
-            revenue = bookings.reduce((sum, b) => sum + (b.price || 0), 0);
+            revenue = bookings.reduce((sum, b) => sum + (b.amount || 0), 0);
             
             // Get last 5 bookings for activity
             recentActivity = bookings.sort((a,b) => b.id - a.id).slice(0, 5);
@@ -135,17 +145,17 @@ const AdminDashboardPage = {
                                  <div class="list-group-item px-4 py-3">
                                     <div class="d-flex w-100 justify-content-between">
                                         <h6 class="mb-1 text-primary">Booking #${b.id}</h6>
-                                        <small class="text-muted fw-bold">${b.price ? b.price.toLocaleString() : 0} VND</small>
+                                        <small class="text-muted fw-bold">${b.amount ? b.amount.toLocaleString() : 0} VND</small>
                                     </div>
                                     <p class="mb-1 small">
-                                        Customer: <strong>${b.user_email || 'Unknown'}</strong><br>
+                                        Customer: <strong>${b.customer_email || b.email || 'Unknown'}</strong><br>
                                         Seat: ${b.seat_number}
                                     </p>
                                  </div>
                              `).join('')}
                              
                              <div class="list-group-item px-4 py-3 text-center text-muted small bg-light">
-                                <a href="#" onclick="alert('View all bookings feature is under development')" class="text-decoration-none">View all activity</a>
+                                <a href="/admin/bookings/manage" class="text-decoration-none">View all activity</a>
                              </div>
                         </div>
                     </div>
@@ -163,8 +173,11 @@ const AdminDashboardPage = {
                                 <a href="/admin/showtimes/manage" class="btn btn-outline-dark text-start p-3">
                                     <i class="bi bi-calendar-plus me-2"></i> Add Showtime
                                 </a>
-                                <button class="btn btn-outline-secondary text-start p-3" disabled>
-                                    <i class="bi bi-printer me-2"></i> Export Report (Coming Soon)
+                                <button id="export-report-btn" class="btn btn-outline-success text-start p-3">
+                                    <i class="bi bi-file-earmark-spreadsheet me-2"></i> Export CSV
+                                </button>
+                                <button id="export-pdf-btn" class="btn btn-outline-danger text-start p-3">
+                                    <i class="bi bi-file-earmark-pdf me-2"></i> Export PDF
                                 </button>
                             </div>
                         </div>
@@ -177,6 +190,133 @@ const AdminDashboardPage = {
   },
   afterRender: () => {
      AdminSidebar.afterRender();
+     
+     // Helper for data prep
+     const fetchData = async () => {
+         return await Promise.all([
+            getMovies(),
+            getAllBookings(),
+            getShowtimes()
+         ]);
+     };
+
+     const exportPdfBtn = document.getElementById('export-pdf-btn');
+     if (exportPdfBtn) {
+         exportPdfBtn.addEventListener('click', async () => {
+             try {
+                 exportPdfBtn.disabled = true;
+                 exportPdfBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Generating...';
+                 
+                 const [movies, bookings, showtimes] = await fetchData();
+                 
+                 const doc = new jsPDF();
+                 
+                 // Title
+                 doc.setFontSize(18);
+                 doc.text('Revenue Report', 14, 22);
+                 doc.setFontSize(11);
+                 doc.setTextColor(100);
+                 doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 30);
+                 
+                 // Table Data
+                 const tableData = movies.map(movie => {
+                     const movieShowtimeIds = showtimes
+                        .filter(s => s.movie_id === movie.id)
+                        .map(s => s.id);
+                     
+                     const movieBookings = bookings.filter(b => movieShowtimeIds.includes(b.showtime_id));
+                     const totalRevenue = movieBookings.reduce((sum, b) => sum + (b.amount || 0), 0);
+                     const totalTickets = movieBookings.length;
+                     
+                     return [
+                         movie.id,
+                         movie.title,
+                         movie.genre,
+                         new Date(movie.release_date).toLocaleDateString(),
+                         totalTickets,
+                         totalRevenue.toLocaleString()
+                     ];
+                 });
+                 
+                 // Use autoTable function directly if attached, or call it
+                 autoTable(doc, {
+                     head: [['ID', 'Title', 'Genre', 'Release Date', 'Tickets', 'Revenue (VND)']],
+                     body: tableData,
+                     startY: 40,
+                     theme: 'grid',
+                     styles: { fontSize: 8 },
+                     headStyles: { fillColor: [41, 128, 185] }
+                 });
+                 
+                 // Total Summary
+                 const totalRevenueAll = bookings.reduce((sum, b) => sum + (b.amount || 0), 0);
+                 const finalY = doc.lastAutoTable.finalY + 10;
+                 
+                 doc.setFontSize(12);
+                 doc.setTextColor(0);
+                 doc.text(`Total System Revenue: ${totalRevenueAll.toLocaleString()} VND`, 14, finalY);
+                 
+                 doc.save(`revenue_report_${new Date().toISOString().slice(0,10)}.pdf`);
+                 
+             } catch (err) {
+                 console.error("PDF Generation Error:", err);
+                 alert('Failed to generate PDF. Check console for details. Error: ' + err.message);
+             } finally {
+                 exportPdfBtn.disabled = false;
+                 exportPdfBtn.innerHTML = '<i class="bi bi-file-earmark-pdf me-2"></i> Export PDF';
+             }
+         });
+     }
+     
+     const exportBtn = document.getElementById('export-report-btn');
+     if(exportBtn) {
+         exportBtn.addEventListener('click', async () => {
+             try {
+                 const [movies, bookings, showtimes] = await fetchData();
+                 
+                 // Generate CSV
+                 const rows = [
+                     ['Movie ID', 'Title', 'Genre', 'Release Date', 'Total Bookings', 'Total Revenue (VND)']
+                 ];
+                 
+                 movies.forEach(movie => {
+                     // Get all showtimes for this movie
+                     const movieShowtimeIds = showtimes
+                        .filter(s => s.movie_id === movie.id)
+                        .map(s => s.id);
+                     
+                     // Get all bookings for those showtimes
+                     const movieBookings = bookings.filter(b => movieShowtimeIds.includes(b.showtime_id));
+                     
+                     const totalRevenue = movieBookings.reduce((sum, b) => sum + (b.amount || 0), 0);
+                     const totalTickets = movieBookings.length;
+                     
+                     rows.push([
+                         movie.id,
+                         `"${movie.title.replace(/"/g, '""')}"`, // Escape quotes
+                         movie.genre,
+                         movie.release_date,
+                         totalTickets,
+                         totalRevenue
+                     ]);
+                 });
+                 
+                 const csvContent = "data:text/csv;charset=utf-8," 
+                    + rows.map(e => e.join(",")).join("\n");
+                    
+                 const encodedUri = encodeURI(csvContent);
+                 const link = document.createElement("a");
+                 link.setAttribute("href", encodedUri);
+                 link.setAttribute("download", `revenue_report_${new Date().toISOString().slice(0,10)}.csv`);
+                 document.body.appendChild(link);
+                 link.click();
+                 document.body.removeChild(link);
+                 
+             } catch (err) {
+                 alert('Failed to generate report: ' + err.message);
+             }
+         });
+     }
   }
 };
 

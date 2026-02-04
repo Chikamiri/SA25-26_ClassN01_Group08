@@ -15,10 +15,10 @@ const AdminSidebar = {
           <a class="nav-link ${activePage === 'showtimes' ? 'active' : ''}" href="/admin/showtimes/manage">
             <i class="bi bi-calendar-week"></i> Manage Showtimes
           </a>
-          <a class="nav-link text-muted" href="#" onclick="alert('Feature under development')">
+          <a class="nav-link ${activePage === 'bookings' ? 'active' : ''}" href="/admin/bookings/manage">
             <i class="bi bi-ticket-detailed"></i> Manage Bookings
           </a>
-          <a class="nav-link text-muted" href="#" onclick="alert('Feature under development')">
+          <a class="nav-link ${activePage === 'users' ? 'active' : ''}" href="/admin/users/manage">
              <i class="bi bi-people"></i> Manage Users
           </a>
         </nav>

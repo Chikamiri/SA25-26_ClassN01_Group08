@@ -3,6 +3,7 @@ import glob
 
 def reset_db():
     base_dir = os.path.dirname(os.path.abspath(__file__))
+    # Search for all .db files inside src/**/db/
     pattern = os.path.join(base_dir, "src", "**", "db", "*.db")
     
     print(f"Searching for databases in: {pattern}")
@@ -24,4 +25,3 @@ def reset_db():
 
 if __name__ == "__main__":
     reset_db()
-

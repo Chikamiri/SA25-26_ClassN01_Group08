@@ -90,6 +90,10 @@ def get_me():
 def get_users():
     return validate_and_forward(USER_SERVICE_URL, request.path, 'admin')
 
+@app.route('/api/users/<path:path>', methods=['GET','PUT'])
+def user_detail(path):
+    return validate_and_forward(USER_SERVICE_URL, request.path, 'admin')
+
 @app.route('/api/movies', methods=['GET','POST'])
 def movies_list():
     if request.method == 'POST':

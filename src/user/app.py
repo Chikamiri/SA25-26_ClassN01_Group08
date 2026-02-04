@@ -150,6 +150,36 @@ def get_all_users():
     
     return jsonify([dict(row) for row in users])
 
+@app.route('/api/users/<int:user_id>', methods=['GET'])
+def get_user(user_id):
+    conn = get_db_connection()
+    user = conn.execute('SELECT id, email, role FROM users WHERE id = ?', (user_id,)).fetchone()
+    conn.close()
+    
+    if user:
+        return jsonify(dict(user))
+    return jsonify({"error": "User not found"}), 404
+
+@app.route('/api/users/<int:user_id>', methods=['PUT'])
+def update_user(user_id):
+    data = request.json
+    role = data.get('role')
+    password = data.get('password')
+    
+    conn = get_db_connection()
+    
+    if role:
+        conn.execute('UPDATE users SET role = ? WHERE id = ?', (role, user_id))
+    
+    if password:
+        hashed_password = generate_password_hash(password)
+        conn.execute('UPDATE users SET password = ? WHERE id = ?', (hashed_password, user_id))
+        
+    conn.commit()
+    conn.close()
+    
+    return jsonify({"message": "User updated successfully"}), 200
+
 if __name__ == '__main__':
     print("User Service (Auth) running on port 5004...")
     app.run(debug=True, port=5004, host='0.0.0.0')

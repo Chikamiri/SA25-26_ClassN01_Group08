@@ -8,6 +8,8 @@ import AdminLoginPage from './pages/AdminLoginPage.js';
 import AdminDashboardPage from './pages/AdminDashboardPage.js';
 import AdminMoviesPage from './pages/AdminMoviesPage.js';
 import AdminShowtimesPage from './pages/AdminShowtimesPage.js';
+import AdminBookingsPage from './pages/AdminBookingsPage.js';
+import AdminUsersPage from './pages/AdminUsersPage.js';
 import BookingsPage from './pages/BookingsPage.js';
 import MyBookingsPage from './pages/MyBookingsPage.js';
 import PaymentPage from './pages/PaymentPage.js';
@@ -35,6 +37,8 @@ const routes = {
     '/admin/dashboard': AdminDashboardPage,
     '/admin/movies/manage': AdminMoviesPage,
     '/admin/showtimes/manage': AdminShowtimesPage,
+    '/admin/bookings/manage': AdminBookingsPage,
+    '/admin/users/manage': AdminUsersPage,
     '/movies': MoviesPage,
     '/movies/:id': MovieDetailsPage,
     '/book/:id': BookingsPage,

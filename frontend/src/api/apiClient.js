@@ -1,9 +1,9 @@
 // src/api/apiClient.js
 
-// Base URL cho API Gateway. Theo kế hoạch, nó chạy trên port 5000.
+// Base URL for API Gateway. It runs on port 5000 by default.
 export const API_GATEWAY_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:5000/api';
 
-// Hàm helper để thực hiện các yêu cầu fetch với header Authorization nếu có
+// Helper function to make fetch requests with Authorization header if available
 export async function request(endpoint, options = {}) {
   const user = localStorage.getItem('user');
   const userToken = user ? JSON.parse(user).token : null;
@@ -15,11 +15,11 @@ export async function request(endpoint, options = {}) {
     ...(options.headers || {}),
   };
 
-  // Thêm header Authorization nếu có token
+  // Add Authorization header if token exists
   if (userToken) {
     headers['Authorization'] = `Bearer ${userToken}`;
   }
-  // Thêm header X-User-Email nếu có email
+  // Add X-User-Email header if email exists
   if (userEmail) {
     headers['X-User-Email'] = userEmail;
   }
@@ -29,8 +29,16 @@ export async function request(endpoint, options = {}) {
   try {
     const response = await fetch(url, { ...options, headers });
 
+    // Handle 401 Unauthorized (Token invalid or expired)
+    if (response.status === 401) {
+      console.warn('Session expired or invalid token. Logging out...');
+      localStorage.removeItem('user');
+      window.location.href = '/login'; 
+      throw new Error('Session expired. Please login again.');
+    }
+
     if (!response.ok) {
-      // Xử lý các lỗi HTTP
+      // Handle other HTTP errors
       let errorData;
       try {
         errorData = await response.json();
@@ -50,7 +58,7 @@ export async function request(endpoint, options = {}) {
   } catch (error) {
     console.error('API request failed:', error);
     
-    // Phân biệt lỗi Network (Fetch Error) với lỗi từ Server trả về
+    // Distinguish Network Error from Server Error
     if (error.name === 'TypeError' && error.message === 'Failed to fetch') {
       throw new Error('Cannot connect to Server (Gateway is down or Network error)');
     }
@@ -59,16 +67,16 @@ export async function request(endpoint, options = {}) {
   }
 }
 
-// Hàm helper cho việc đăng nhập
+// Helper function for login
 export async function loginUser(credentials) {
-  // credentials sẽ là { email, password }
+  // credentials: { email, password }
   return request('auth/login', {
     method: 'POST',
     body: JSON.stringify(credentials),
   });
 }
 
-// Đăng ký tài khoản mới
+// Register new account
 export async function registerUser(credentials) {
   // credentials: { email, password }
   return request('auth/register', {
@@ -81,36 +89,36 @@ export async function getUserProfile() {
   return request('users/me', { method: 'GET' });
 }
 
-// --- Các hàm API liên quan đến Phim và Suất Chiếu ---
+// --- Movies & Showtimes APIs ---
 
-// Lấy danh sách phim
+// Get list of movies
 export async function getMovies(query = '') {
   const endpoint = query ? `movies?query=${encodeURIComponent(query)}` : 'movies';
   return request(endpoint, { method: 'GET' });
 }
 
-// Lấy chi tiết một bộ phim
+// Get details of a movie
 export async function getMovieById(id) {
   return request(`movies/${id}`, { method: 'GET' });
 }
 
-// Lấy danh sách suất chiếu cho một bộ phim (hoặc tất cả nếu movieId là null)
+// Get showtimes for a movie (or all if movieId is null)
 export async function getShowtimes(movieId = null) {
   const endpoint = movieId ? `showtimes?movie_id=${encodeURIComponent(movieId)}` : 'showtimes';
   return request(endpoint, { method: 'GET' });
 }
 
-// Lấy chi tiết một suất chiếu
+// Get details of a showtime
 export async function getShowtimeDetail(id) {
   return request(`showtimes/${id}`, { method: 'GET' });
 }
 
-// Lấy danh sách ghế của suất chiếu
+// Get seats of a showtime
 export async function getShowtimeSeats(showtimeId) {
   return request(`showtimes/${showtimeId}/seats`, { method: 'GET' });
 }
 
-// Lấy danh sách phòng chiếu
+// Get list of rooms
 export async function getRooms() {
   return request('rooms', { method: 'GET' });
 }
@@ -119,19 +127,19 @@ export async function getRoomById(id) {
   return request(`rooms/${id}`, { method: 'GET' });
 }
 
-// --- Các hàm API liên quan đến Đặt vé ---
+// --- Booking APIs ---
 
-// Đặt vé
+// Book ticket
 export async function bookTicket(bookingData) {
-  // bookingData sẽ chứa { showtime_id, seat_number }
-  // Email của người dùng sẽ được thêm tự động bởi hàm request (qua header X-User-Email)
+  // bookingData: { showtime_id, seat_number }
+  // User email is automatically added by request function (via X-User-Email header)
   return request('bookings', {
     method: 'POST',
     body: JSON.stringify(bookingData),
   });
 }
 
-// Lấy danh sách vé đã đặt của tôi
+// Get my bookings
 export async function getMyBookings() {
   return request('bookings/my', { method: 'GET' });
 }
@@ -140,17 +148,24 @@ export async function getBookingById(id) {
   return request(`bookings/${id}`, { method: 'GET' });
 }
 
-// Lấy tất cả các booking (Admin)
+// Get all bookings (Admin)
 export async function getAllBookings() {
   return request('bookings', { method: 'GET' });
 }
 
-// Lấy tất cả users (Admin)
+// Get all users (Admin)
 export async function getAllUsers() {
   return request('users', { method: 'GET' });
 }
 
-// Xử lý thanh toán
+export async function updateUser(id, userData) {
+  return request(`users/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(userData),
+  });
+}
+
+// Process payment
 export async function processPayment(paymentData) {
   // paymentData: { booking_id }
   return request('payments', {
@@ -159,17 +174,17 @@ export async function processPayment(paymentData) {
   });
 }
 
-// Xóa booking
+// Delete booking
 export async function deleteBooking(id) {
   return request(`bookings/${id}`, { method: 'DELETE' });
 }
 
-// Lấy danh sách thẻ đã lưu
+// Get saved payment methods
 export async function getPaymentMethods() {
   return request('payment-methods', { method: 'GET' });
 }
 
-// Lưu thẻ mới
+// Save new card
 export async function savePaymentMethod(cardData) {
   // cardData: { card_number, card_holder }
   return request('payment-methods', {
@@ -178,12 +193,12 @@ export async function savePaymentMethod(cardData) {
   });
 }
 
-// Xóa thẻ
+// Delete card
 export async function deletePaymentMethod(id) {
   return request(`payment-methods/${id}`, { method: 'DELETE' });
 }
 
-// Cập nhật thẻ
+// Update card
 export async function updatePaymentMethod(id, data) {
   return request(`payment-methods/${id}`, {
     method: 'PUT',
@@ -191,7 +206,7 @@ export async function updatePaymentMethod(id, data) {
   });
 }
 
-// --- Các hàm API cho Admin (Movies) ---
+// --- Admin APIs (Movies) ---
 
 export async function createMovie(movieData) {
   return request('movies', {
@@ -213,7 +228,7 @@ export async function deleteMovie(id) {
   });
 }
 
-// --- Các hàm API cho Admin (Showtimes) ---
+// --- Admin APIs (Showtimes) ---
 
 export async function createShowtime(showtimeData) {
   return request('showtimes', {
