@@ -3,6 +3,8 @@ import os
 import requests
 import pika
 import json
+import datetime
+import sqlite3
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
@@ -16,6 +18,34 @@ BOOKING_SERVICE_URL = os.getenv("BOOKING_SERVICE_URL", "http://127.0.0.1:5002")
 RABBITMQ_HOST = os.getenv("RABBITMQ_HOST", "localhost")
 RABBITMQ_URL = os.getenv('RABBITMQ_URL', f'amqp://guest:guest@{RABBITMQ_HOST}:5672/')
 
+# --- Database Setup ---
+def get_db_connection():
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    db_folder = os.path.join(base_dir, 'db')
+    if not os.path.exists(db_folder):
+        os.makedirs(db_folder)
+    
+    conn = sqlite3.connect(os.path.join(db_folder, 'payments.db'))
+    conn.row_factory = sqlite3.Row
+    return conn
+
+def init_db():
+    conn = get_db_connection()
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS cards (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_email TEXT NOT NULL,
+            card_number_masked TEXT NOT NULL,
+            card_holder TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+init_db()
+
+# --- Helper Functions ---
 def send_invoice_event(invoice_data):
     try:
         if RABBITMQ_HOST != 'localhost':
@@ -48,6 +78,87 @@ def send_invoice_event(invoice_data):
         print(f"[RabbitMQ] Sent invoice event for Booking #{invoice_data['booking_id']}")
     except Exception as e:
         print(f"[ERROR] Failed to send RabbitMQ event: {e}")
+
+# --- API Endpoints ---
+
+@app.route('/api/payment-methods', methods=['GET'])
+def get_payment_methods():
+    user_email = request.headers.get('X-User-Email')
+    if not user_email:
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    conn = get_db_connection()
+    cards = conn.execute('SELECT * FROM cards WHERE user_email = ? ORDER BY id DESC', (user_email,)).fetchall()
+    conn.close()
+    
+    return jsonify([dict(card) for card in cards])
+
+@app.route('/api/payment-methods', methods=['POST'])
+def add_payment_method():
+    user_email = request.headers.get('X-User-Email')
+    if not user_email:
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    data = request.json
+    card_number = data.get('card_number')
+    card_holder = data.get('card_holder')
+    
+    if not card_number or not card_holder:
+        return jsonify({"error": "Invalid card details"}), 400
+        
+    # Masking: Keep only last 4 digits
+    masked = f"**** **** **** {card_number[-4:]}"
+    
+    conn = get_db_connection()
+    conn.execute('INSERT INTO cards (user_email, card_number_masked, card_holder) VALUES (?, ?, ?)',
+                 (user_email, masked, card_holder))
+    conn.commit()
+    conn.close()
+    
+    return jsonify({"message": "Card saved", "card_number": masked}), 201
+
+@app.route('/api/payment-methods/<int:card_id>', methods=['DELETE'])
+def delete_payment_method(card_id):
+    user_email = request.headers.get('X-User-Email')
+    if not user_email:
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    conn = get_db_connection()
+    # Ensure user owns the card
+    card = conn.execute('SELECT * FROM cards WHERE id = ? AND user_email = ?', (card_id, user_email)).fetchone()
+    if not card:
+        conn.close()
+        return jsonify({"error": "Card not found or access denied"}), 404
+        
+    conn.execute('DELETE FROM cards WHERE id = ?', (card_id,))
+    conn.commit()
+    conn.close()
+    
+    return jsonify({"message": "Card deleted"}), 200
+
+@app.route('/api/payment-methods/<int:card_id>', methods=['PUT'])
+def update_payment_method(card_id):
+    user_email = request.headers.get('X-User-Email')
+    if not user_email:
+        return jsonify({"error": "Unauthorized"}), 401
+        
+    data = request.json
+    new_holder = data.get('card_holder')
+    if not new_holder:
+        return jsonify({"error": "Missing card_holder"}), 400
+
+    conn = get_db_connection()
+    # Check ownership
+    card = conn.execute('SELECT * FROM cards WHERE id = ? AND user_email = ?', (card_id, user_email)).fetchone()
+    if not card:
+        conn.close()
+        return jsonify({"error": "Card not found or access denied"}), 404
+        
+    conn.execute('UPDATE cards SET card_holder = ? WHERE id = ?', (new_holder, card_id))
+    conn.commit()
+    conn.close()
+    
+    return jsonify({"message": "Card updated"}), 200
 
 @app.route('/api/payments', methods=['POST'])
 def process_payment():
@@ -84,9 +195,16 @@ def process_payment():
         "customer": email,
         "amount": amount,
         "booking_id": booking_id,
-        "date": "2026-01-13" 
+        "date": str(datetime.date.today())
     }
     
+    # 1. Update Booking Status
+    try:
+        requests.put(f"{BOOKING_SERVICE_URL}/api/bookings/{booking_id}/status", json={"status": "confirmed"})
+    except Exception as e:
+        print(f"[WARNING] Could not update booking status: {e}")
+
+    # 2. Send Invoice Event
     send_invoice_event(invoice_data)
     
     print("\n----------------------------------------")

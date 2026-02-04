@@ -176,6 +176,13 @@ class BookingRepository:
         conn.close()
         return dict(row) if row else None
 
+    def update_booking_status(self, booking_id, status):
+        conn = self._get_connection()
+        conn.execute('UPDATE bookings SET status = ? WHERE id = ?', (status, booking_id))
+        conn.commit()
+        conn.close()
+        return True
+
     def delete_booking(self, booking_id):
         conn = self._get_connection()
         bk = conn.execute('SELECT * FROM bookings WHERE id = ?', (booking_id,)).fetchone()

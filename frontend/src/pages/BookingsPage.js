@@ -90,21 +90,6 @@ const BookingsPage = {
                     </div>
                 </div>
                 
-                <div id="payment-step" style="display: none;">
-                   <div class="card shadow border-primary border-2">
-                     <div class="card-body p-5 text-center">
-                       <h3 class="fw-bold mb-3 text-primary">Thanh Toán</h3>
-                       <div id="payment-info" class="lead mb-4"></div>
-                       <button id="pay-now-btn" class="btn btn-success btn-lg px-5 fw-bold shadow">
-                          Xác nhận Thanh toán
-                       </button>
-                     </div>
-                   </div>
-                </div>
-
-                <div id="booking-success" style="display: none;" class="alert alert-success p-5 text-center shadow-sm">
-                </div>
-
                 <div class="mt-4 text-center">
                     <a href="/movies" class="text-decoration-none text-muted small">&larr; Quay lại danh sách phim</a>
                 </div>
@@ -126,10 +111,6 @@ const BookingsPage = {
     const confirmBtn = document.getElementById('confirm-booking-btn');
     const errorMsg = document.getElementById('booking-error');
     const bookingContainer = document.getElementById('booking-container');
-    const paymentStep = document.getElementById('payment-step');
-    const paymentInfo = document.getElementById('payment-info');
-    const payNowBtn = document.getElementById('pay-now-btn');
-    const successDiv = document.getElementById('booking-success');
     const schedulePickerContainer = document.getElementById('schedule-picker-container');
     const roomNameDisplay = document.getElementById('room-name-display');
 
@@ -362,44 +343,13 @@ const BookingsPage = {
 
             const totalPrice = response.total_price || response.price;
 
-            bookingContainer.style.display = 'none';
-            paymentStep.style.display = 'block';
-            paymentInfo.innerHTML = `
-                Ghế: <span class="badge bg-primary">${selectedSeats.join(', ')}</span><br>
-                Tổng số tiền: <span class="fw-bold text-success">${totalPrice.toLocaleString()} VND</span>
-            `;
+            // Redirect to Payment Page
+            window.location.href = `/payment?booking_ids=${currentBookingIds.join(',')}&amount=${totalPrice}`;
 
         } catch (err) {
             errorMsg.innerText = err.message || 'Đã xảy ra lỗi khi đặt vé.';
             confirmBtn.disabled = false;
             confirmBtn.innerText = 'Tiếp tục đặt vé';
-        }
-    });
-
-    payNowBtn.addEventListener('click', async () => {
-        payNowBtn.disabled = true;
-        payNowBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Đang thanh toán...';
-        
-        try {
-            // Process payment for all booking IDs
-            const paymentPromises = currentBookingIds.map(id => processPayment({ booking_id: id }));
-            await Promise.all(paymentPromises);
-            
-            paymentStep.style.display = 'none';
-            successDiv.style.display = 'block';
-            successDiv.innerHTML = `
-                <div class="display-1 mb-4">✅</div>
-                <h3 class="fw-bold">Thanh toán thành công!</h3>
-                <p class="lead mb-4">Các vé của bạn đã được xác nhận. <br> Mã đặt vé: <strong>${currentBookingIds.map(id => '#' + id).join(', ')}</strong></p>
-                <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
-                  <a href="/my-bookings" class="btn btn-primary btn-lg px-4">Xem Vé Của Tôi</a>
-                  <a href="/movies" class="btn btn-outline-secondary btn-lg px-4">Quay lại trang phim</a>
-                </div>
-            `;
-        } catch (err) {
-            alert('Lỗi thanh toán: ' + err.message);
-            payNowBtn.disabled = false;
-            payNowBtn.innerText = 'Xác nhận Thanh toán';
         }
     });
 

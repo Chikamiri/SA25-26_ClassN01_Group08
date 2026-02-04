@@ -68,6 +68,19 @@ export async function loginUser(credentials) {
   });
 }
 
+// Đăng ký tài khoản mới
+export async function registerUser(credentials) {
+  // credentials: { email, password }
+  return request('auth/register', {
+    method: 'POST',
+    body: JSON.stringify(credentials),
+  });
+}
+
+export async function getUserProfile() {
+  return request('users/me', { method: 'GET' });
+}
+
 // --- Các hàm API liên quan đến Phim và Suất Chiếu ---
 
 // Lấy danh sách phim
@@ -123,12 +136,58 @@ export async function getMyBookings() {
   return request('bookings/my', { method: 'GET' });
 }
 
+export async function getBookingById(id) {
+  return request(`bookings/${id}`, { method: 'GET' });
+}
+
+// Lấy tất cả các booking (Admin)
+export async function getAllBookings() {
+  return request('bookings', { method: 'GET' });
+}
+
+// Lấy tất cả users (Admin)
+export async function getAllUsers() {
+  return request('users', { method: 'GET' });
+}
+
 // Xử lý thanh toán
 export async function processPayment(paymentData) {
   // paymentData: { booking_id }
   return request('payments', {
     method: 'POST',
     body: JSON.stringify(paymentData),
+  });
+}
+
+// Xóa booking
+export async function deleteBooking(id) {
+  return request(`bookings/${id}`, { method: 'DELETE' });
+}
+
+// Lấy danh sách thẻ đã lưu
+export async function getPaymentMethods() {
+  return request('payment-methods', { method: 'GET' });
+}
+
+// Lưu thẻ mới
+export async function savePaymentMethod(cardData) {
+  // cardData: { card_number, card_holder }
+  return request('payment-methods', {
+    method: 'POST',
+    body: JSON.stringify(cardData),
+  });
+}
+
+// Xóa thẻ
+export async function deletePaymentMethod(id) {
+  return request(`payment-methods/${id}`, { method: 'DELETE' });
+}
+
+// Cập nhật thẻ
+export async function updatePaymentMethod(id, data) {
+  return request(`payment-methods/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data)
   });
 }
 

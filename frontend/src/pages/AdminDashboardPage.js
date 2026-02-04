@@ -1,13 +1,16 @@
 
+import AdminSidebar from '../components/AdminSidebar.js';
+import { getMovies, getAllBookings, getAllUsers } from '../api/apiClient.js';
+
 const AdminDashboardPage = {
-  render: () => {
+  render: async () => {
     const user = JSON.parse(localStorage.getItem('user'));
     
     if (!user || user.role !== 'admin') {
         return `
           <div class="container py-5 text-center">
-            <div class="alert alert-danger d-inline-block">
-              <h4 class="alert-heading">Truy cập bị từ chối!</h4>
+            <div class="alert alert-danger d-inline-block shadow-sm">
+              <h4 class="alert-heading"><i class="bi bi-shield-lock"></i> Truy cập bị từ chối!</h4>
               <p>Bạn không có quyền truy cập trang này.</p>
               <hr>
               <a href="/admin/login" class="btn btn-outline-danger btn-sm">Đăng nhập Admin</a>
@@ -16,55 +19,165 @@ const AdminDashboardPage = {
         `;
     }
 
-    return `
-      <div class="container py-4">
-        <h2 class="fw-bold mb-4">Bảng Điều Khiển Quản Trị</h2>
-        
-        <div class="row g-4">
-          <div class="col-md-12">
-            <div class="card bg-primary text-white shadow-sm mb-4">
-              <div class="card-body p-4">
-                <h4 class="card-title">Xin chào, ${user.email}!</h4>
-                <p class="card-text">Hệ thống quản lý rạp chiếu phim đang hoạt động.</p>
-              </div>
-            </div>
-          </div>
-          
-          <div class="col-md-6">
-            <div class="card h-100 shadow-sm">
-              <div class="card-header bg-white fw-bold py-3">Quản lý nội dung</div>
-              <div class="list-group list-group-flush">
-                <a href="/admin/movies/manage" class="list-group-item list-group-item-action py-3 d-flex justify-content-between align-items-center">
-                  <div>
-                    <strong>Quản lý Phim</strong>
-                    <div class="small text-muted">Thêm, sửa, xóa phim</div>
-                  </div>
-                  <span class="fs-4">🎬</span>
-                </a>
-                <a href="/admin/showtimes/manage" class="list-group-item list-group-item-action py-3 d-flex justify-content-between align-items-center">
-                  <div>
-                    <strong>Quản lý Lịch chiếu</strong>
-                    <div class="small text-muted">Xếp lịch chiếu cho các phim</div>
-                  </div>
-                  <span class="fs-4">📅</span>
-                </a>
-              </div>
-            </div>
-          </div>
+    // Fetch Data
+    let moviesCount = 0;
+    let revenue = 0;
+    let bookingsCount = 0;
+    let usersCount = 0;
+    let recentActivity = [];
 
-          <div class="col-md-6">
-            <div class="card h-100 shadow-sm">
-              <div class="card-header bg-white fw-bold py-3">Thống kê nhanh</div>
-              <div class="card-body">
-                 <p class="text-muted text-center py-5">Chức năng thống kê đang được phát triển...</p>
-              </div>
+    try {
+        const [movies, bookings, users] = await Promise.all([
+            getMovies(),
+            getAllBookings(),
+            getAllUsers()
+        ]);
+
+        moviesCount = movies.length;
+        
+        if (Array.isArray(bookings)) {
+            bookingsCount = bookings.length;
+            revenue = bookings.reduce((sum, b) => sum + (b.price || 0), 0);
+            
+            // Get last 5 bookings for activity
+            recentActivity = bookings.sort((a,b) => b.id - a.id).slice(0, 5);
+        }
+
+        if (Array.isArray(users)) {
+            usersCount = users.filter(u => u.role === 'customer').length;
+        }
+
+    } catch (e) {
+        console.error("Error fetching dashboard stats:", e);
+    }
+
+    const formatCurrency = (val) => {
+        return val.toLocaleString('vi-VN') + ' VND';
+    };
+
+    return `
+      <div class="admin-layout">
+        ${AdminSidebar.render('dashboard')}
+        
+        <div class="admin-content">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="fw-bold mb-0">Dashboard Overview</h2>
+                <div class="text-muted">Xin chào, <span class="fw-bold text-dark">${user.email}</span></div>
             </div>
-          </div>
+
+            <!-- Stats Row -->
+            <div class="row g-4 mb-4">
+                <div class="col-md-3">
+                    <div class="card stat-card bg-primary text-white h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-white-50 text-uppercase small fw-bold">Tổng Phim</h6>
+                                    <h2 class="mb-0 fw-bold">${moviesCount}</h2>
+                                </div>
+                                <i class="bi bi-film fs-1 opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stat-card bg-success text-white h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-white-50 text-uppercase small fw-bold">Doanh Thu</h6>
+                                    <h2 class="mb-0 fw-bold">${(revenue/1000000).toFixed(1)}M</h2>
+                                    <small class="text-white-50" style="font-size: 0.7rem;">${formatCurrency(revenue)}</small>
+                                </div>
+                                <i class="bi bi-currency-dollar fs-1 opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stat-card bg-warning text-dark h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-black-50 text-uppercase small fw-bold">Vé Đã Đặt</h6>
+                                    <h2 class="mb-0 fw-bold">${bookingsCount}</h2>
+                                </div>
+                                <i class="bi bi-ticket-perforated fs-1 opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stat-card bg-info text-white h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-white-50 text-uppercase small fw-bold">Khách Hàng</h6>
+                                    <h2 class="mb-0 fw-bold">${usersCount}</h2>
+                                </div>
+                                <i class="bi bi-people fs-1 opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions & Recent Activity -->
+            <div class="row g-4">
+                <div class="col-lg-8">
+                    <div class="card shadow-sm border-0 h-100">
+                        <div class="card-header bg-white py-3 fw-bold border-bottom">
+                            <i class="bi bi-clock-history"></i> Hoạt động đặt vé gần đây
+                        </div>
+                        <div class="list-group list-group-flush">
+                             ${recentActivity.length === 0 ? '<div class="p-4 text-center text-muted">Chưa có hoạt động nào.</div>' : ''}
+                             ${recentActivity.map(b => `
+                                 <div class="list-group-item px-4 py-3">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1 text-primary">Booking #${b.id}</h6>
+                                        <small class="text-muted fw-bold">${b.price ? b.price.toLocaleString() : 0} VND</small>
+                                    </div>
+                                    <p class="mb-1 small">
+                                        Khách hàng: <strong>${b.user_email || 'Unknown'}</strong><br>
+                                        Ghế: ${b.seat_number}
+                                    </p>
+                                 </div>
+                             `).join('')}
+                             
+                             <div class="list-group-item px-4 py-3 text-center text-muted small bg-light">
+                                <a href="#" onclick="alert('Tính năng xem tất cả booking đang phát triển')" class="text-decoration-none">Xem tất cả hoạt động</a>
+                             </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="card shadow-sm border-0 h-100">
+                        <div class="card-header bg-white py-3 fw-bold border-bottom">
+                            <i class="bi bi-lightning-charge"></i> Tác vụ nhanh
+                        </div>
+                        <div class="card-body">
+                            <div class="d-grid gap-3">
+                                <a href="/admin/movies/manage" class="btn btn-outline-primary text-start p-3">
+                                    <i class="bi bi-film me-2"></i> Quản lý Phim
+                                </a>
+                                <a href="/admin/showtimes/manage" class="btn btn-outline-dark text-start p-3">
+                                    <i class="bi bi-calendar-plus me-2"></i> Thêm Lịch Chiếu
+                                </a>
+                                <button class="btn btn-outline-secondary text-start p-3" disabled>
+                                    <i class="bi bi-printer me-2"></i> Xuất Báo Cáo (Coming Soon)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
       </div>
     `;
   },
-  afterRender: () => {}
+  afterRender: () => {
+     AdminSidebar.afterRender();
+  }
 };
 
 export default AdminDashboardPage;

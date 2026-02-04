@@ -123,6 +123,33 @@ def verify_token():
     else:
         return jsonify({"valid": False}), 401
 
+@app.route('/api/users/me', methods=['GET'])
+def get_me():
+    token = request.headers.get('Authorization')
+    if not token or not token.startswith("Bearer "):
+         return jsonify({"error": "Missing token"}), 401
+    
+    token = token.split(" ")[1]
+    conn = get_db_connection()
+    session = conn.execute('SELECT * FROM tokens WHERE token = ?', (token,)).fetchone()
+    
+    if not session:
+        conn.close()
+        return jsonify({"error": "Invalid token"}), 401
+        
+    user = conn.execute('SELECT id, email, role FROM users WHERE email = ?', (session['email'],)).fetchone()
+    conn.close()
+    
+    return jsonify(dict(user))
+
+@app.route('/api/users', methods=['GET'])
+def get_all_users():
+    conn = get_db_connection()
+    users = conn.execute('SELECT id, email, role FROM users').fetchall()
+    conn.close()
+    
+    return jsonify([dict(row) for row in users])
+
 if __name__ == '__main__':
     print("User Service (Auth) running on port 5004...")
     app.run(debug=True, port=5004, host='0.0.0.0')

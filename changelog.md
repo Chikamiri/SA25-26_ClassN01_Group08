@@ -82,12 +82,16 @@
 - Big UI changes.
 - Add '.db' to .gitignore
 
-## 4/2/2026
+## 4/2/2026, 18:00
 
-- Redesign booking UI
-- Implement tabbed Date Ribbon and Time Grid
-- Support multi-seat booking
+- Redesign booking UI with tabbed Date Ribbon and Time Grid
 - Implement tiered seat system (Standard, VIP, Couple) with dynamic price surcharges
+- Support multi-seat booking and visual seat selection
+- Implement Payment Method management (CRUD for credit cards) in Payment Service
+- Auto-update booking status to 'confirmed' upon successful payment
+- Implement Profile and User Management endpoints in User Service
+- Redesign Admin Dashboard with new sidebar navigation
 - Enable Docker hot-reload
-- Create reset_db.py and update seed_db.py
+- Create `reset_db.py` and update `seed_db.py`
 - Various bug fixes and clean-up
+- Add '.db' to .gitignore

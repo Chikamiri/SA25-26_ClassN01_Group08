@@ -1,73 +1,77 @@
 import { getMovies, createMovie, updateMovie, deleteMovie } from '../api/apiClient.js';
+import AdminSidebar from '../components/AdminSidebar.js';
 
 const AdminMoviesPage = {
   render: async () => {
     return `
-      <div class="container py-4">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="fw-bold">Quản lý Phim</h2>
-            <button id="add-movie-btn" class="btn btn-success">
-                <i class="bi bi-plus-circle"></i> + Thêm Phim Mới
-            </button>
-        </div>
-
-        <div class="card shadow-sm border-0">
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th class="ps-4">Tên Phim</th>
-                                <th>Thể Loại</th>
-                                <th>Thời Lượng</th>
-                                <th>Ngày Phát Hành</th>
-                                <th class="text-end pe-4">Hành Động</th>
-                            </tr>
-                        </thead>
-                        <tbody id="admin-movies-list">
-                            <tr><td colspan="5" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></td></tr>
-                        </tbody>
-                    </table>
+      <div class="admin-layout">
+        ${AdminSidebar.render('movies')}
+        <div class="admin-content">
+            <div class="container-fluid">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="fw-bold mb-0">Quản lý Phim</h2>
+                    <button id="add-movie-btn" class="btn btn-primary shadow-sm">
+                        <i class="bi bi-plus-lg"></i> Thêm Phim Mới
+                    </button>
                 </div>
-            </div>
-        </div>
 
-        <div class="mt-4">
-            <a href="/admin/dashboard" class="text-decoration-none text-muted">&larr; Quay lại Dashboard</a>
-        </div>
-
-        <!-- Bootstrap Modal -->
-        <div class="modal fade" id="movieModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="modal-title">Thêm Phim</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <div class="card shadow-sm border-0">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="ps-4">Tên Phim</th>
+                                        <th>Thể Loại</th>
+                                        <th>Thời Lượng</th>
+                                        <th>Ngày Phát Hành</th>
+                                        <th class="text-end pe-4">Hành Động</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-movies-list">
+                                    <tr><td colspan="5" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                    <div class="modal-body">
-                        <form id="movie-form">
-                            <input type="hidden" id="movie-id">
-                            <div class="mb-3">
-                                <label class="form-label">Tên phim</label>
-                                <input type="text" id="movie-title" class="form-control" required>
+                </div>
+
+                 <!-- Bootstrap Modal -->
+                <div class="modal fade" id="movieModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header bg-light">
+                                <h5 class="modal-title fw-bold" id="modal-title">Thêm Phim</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
-                            <div class="mb-3">
-                                <label class="form-label">Thể loại</label>
-                                <input type="text" id="movie-genre" class="form-control" required>
+                            <div class="modal-body p-4">
+                                <form id="movie-form">
+                                    <input type="hidden" id="movie-id">
+                                    <div class="mb-3">
+                                        <label class="form-label text-muted small fw-bold text-uppercase">Tên phim</label>
+                                        <input type="text" id="movie-title" class="form-control" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label text-muted small fw-bold text-uppercase">Thể loại</label>
+                                        <input type="text" id="movie-genre" class="form-control" required>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label text-muted small fw-bold text-uppercase">Thời lượng (phút)</label>
+                                            <input type="number" id="movie-duration" class="form-control" required min="1">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label text-muted small fw-bold text-uppercase">Ngày phát hành</label>
+                                            <input type="date" id="movie-release-date" class="form-control" required>
+                                        </div>
+                                    </div>
+                                    <div class="text-end mt-4">
+                                        <button type="button" class="btn btn-light me-2" data-bs-dismiss="modal">Hủy</button>
+                                        <button type="submit" class="btn btn-primary px-4">Lưu</button>
+                                    </div>
+                                </form>
                             </div>
-                            <div class="mb-3">
-                                <label class="form-label">Thời lượng (phút)</label>
-                                <input type="number" id="movie-duration" class="form-control" required min="1">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Ngày phát hành</label>
-                                <input type="date" id="movie-release-date" class="form-control" required>
-                            </div>
-                            <div class="text-end">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                                <button type="submit" class="btn btn-primary">Lưu</button>
-                            </div>
-                        </form>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -76,6 +80,8 @@ const AdminMoviesPage = {
     `;
   },
   afterRender: async () => {
+    AdminSidebar.afterRender();
+
     const list = document.getElementById('admin-movies-list');
     const addBtn = document.getElementById('add-movie-btn');
     const form = document.getElementById('movie-form');
@@ -96,7 +102,7 @@ const AdminMoviesPage = {
     const renderList = (movies) => {
         moviesData = movies;
         if (movies.length === 0) {
-            list.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">Chưa có phim nào.</td></tr>';
+            list.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-5">Chưa có phim nào.</td></tr>';
             return;
         }
         list.innerHTML = movies.map(movie => `
@@ -106,18 +112,22 @@ const AdminMoviesPage = {
             <td>${movie.duration} phút</td>
             <td>${new Date(movie.release_date).toLocaleDateString()}</td>
             <td class="text-end pe-4">
-                <button class="btn btn-sm btn-outline-primary me-2 edit-btn" data-id="${movie.id}">Sửa</button>
-                <button class="btn btn-sm btn-outline-danger delete-btn" data-id="${movie.id}">Xóa</button>
+                <button class="btn btn-sm btn-outline-primary me-2 edit-btn" data-id="${movie.id}">
+                    <i class="bi bi-pencil"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger delete-btn" data-id="${movie.id}">
+                    <i class="bi bi-trash"></i>
+                </button>
             </td>
           </tr>
         `).join('');
 
         // Attach events
         document.querySelectorAll('.edit-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => openEditModal(e.target.dataset.id));
+            btn.addEventListener('click', (e) => openEditModal(e.currentTarget.dataset.id));
         });
         document.querySelectorAll('.delete-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => handleDelete(e.target.dataset.id));
+            btn.addEventListener('click', (e) => handleDelete(e.currentTarget.dataset.id));
         });
     };
 

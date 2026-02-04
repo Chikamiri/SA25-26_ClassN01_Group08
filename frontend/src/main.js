@@ -1,6 +1,7 @@
 import Header from './components/Header.js';
 import HomePage from './pages/HomePage.js';
 import LoginPage from './pages/LoginPage.js';
+import RegisterPage from './pages/RegisterPage.js';
 import MoviesPage from './pages/MoviesPage.js';
 import MovieDetailsPage from './pages/MovieDetailsPage.js';
 import AdminLoginPage from './pages/AdminLoginPage.js';
@@ -9,6 +10,8 @@ import AdminMoviesPage from './pages/AdminMoviesPage.js';
 import AdminShowtimesPage from './pages/AdminShowtimesPage.js';
 import BookingsPage from './pages/BookingsPage.js';
 import MyBookingsPage from './pages/MyBookingsPage.js';
+import PaymentPage from './pages/PaymentPage.js';
+import ProfilePage from './pages/ProfilePage.js';
 import './index.css';
 
 // Hỗ trợ Router
@@ -26,6 +29,8 @@ const parseUrl = () => {
 const routes = {
     '/': HomePage,
     '/login': LoginPage,
+    '/register': RegisterPage,
+    '/profile': ProfilePage,
     '/admin/login': AdminLoginPage,
     '/admin/dashboard': AdminDashboardPage,
     '/admin/movies/manage': AdminMoviesPage,
@@ -33,7 +38,8 @@ const routes = {
     '/movies': MoviesPage,
     '/movies/:id': MovieDetailsPage,
     '/book/:id': BookingsPage,
-    '/my-bookings': MyBookingsPage
+    '/my-bookings': MyBookingsPage,
+    '/payment': PaymentPage
 };
 
 const router = async () => {
@@ -64,8 +70,9 @@ const router = async () => {
         }
     }
 
-    // Render Header
-    const headerHTML = Header.render();
+    // Render Header only if not in Admin area
+    const isAdminRoute = path.startsWith('/admin');
+    const headerHTML = isAdminRoute ? '' : Header.render();
     content.innerHTML = headerHTML + '<div id="page-container"></div>';
 
     // Render Page
@@ -73,7 +80,7 @@ const router = async () => {
     pageContainer.innerHTML = await page.render();
 
     // After Render
-    if (Header.afterRender) Header.afterRender();
+    if (!isAdminRoute && Header.afterRender) Header.afterRender();
     if (page.afterRender) await page.afterRender();
 };
 

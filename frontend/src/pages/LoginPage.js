@@ -25,6 +25,9 @@ const LoginPage = {
               <div class="mt-4 p-3 bg-light rounded small">
                 <p class="mb-0 text-muted"><strong>Tài khoản thử nghiệm:</strong><br>user@example.com / password123</p>
               </div>
+              <div class="mt-3 text-center">
+                <p class="text-muted small">Chưa có tài khoản? <a href="/register" class="text-decoration-none">Đăng ký ngay</a></p>
+              </div>
             </div>
           </div>
         </div>

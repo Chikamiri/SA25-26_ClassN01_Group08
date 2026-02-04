@@ -48,6 +48,16 @@ def get_detail(booking_id):
     if res: return jsonify(res)
     return jsonify({"error": "Not found"}), 404
 
+@app.route('/api/bookings/<booking_id>/status', methods=['PUT'])
+def update_status(booking_id):
+    data = request.json
+    status = data.get('status')
+    if not status:
+        return jsonify({"error": "Missing status"}), 400
+    
+    booking_service.update_booking_status(booking_id, status)
+    return jsonify({"message": "Status updated"}), 200
+
 @app.route('/api/bookings/<booking_id>', methods=['DELETE'])
 def delete_booking(booking_id):
     try:

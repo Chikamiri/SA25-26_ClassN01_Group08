@@ -82,6 +82,14 @@ def auth_proxy(path):
     resp = requests.post(url, json=request.json)
     return Response(resp.content, resp.status_code, dict(resp.headers))
 
+@app.route('/api/users/me', methods=['GET'])
+def get_me():
+    return public_forward(USER_SERVICE_URL, request.path)
+
+@app.route('/api/users', methods=['GET'])
+def get_users():
+    return validate_and_forward(USER_SERVICE_URL, request.path, 'admin')
+
 @app.route('/api/movies', methods=['GET','POST'])
 def movies_list():
     if request.method == 'POST':
@@ -128,6 +136,14 @@ def booking_detail(path):
 
 @app.route('/api/payments', methods=['POST'])
 def payments():
+    return validate_and_forward(PAYMENT_SERVICE_URL, request.path)
+
+@app.route('/api/payment-methods', methods=['GET', 'POST'])
+def payment_methods():
+    return validate_and_forward(PAYMENT_SERVICE_URL, request.path)
+
+@app.route('/api/payment-methods/<path:path>', methods=['DELETE', 'PUT'])
+def payment_methods_detail(path):
     return validate_and_forward(PAYMENT_SERVICE_URL, request.path)
 
 # ---------- RUN ----------

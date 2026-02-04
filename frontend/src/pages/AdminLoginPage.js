@@ -30,6 +30,9 @@ const AdminLoginPage = {
               </div>
             </div>
           </div>
+          <div class="text-center mt-3">
+             <a href="/" class="text-decoration-none text-muted">&larr; Quay về Trang Chủ</a>
+          </div>
         </div>
       </div>
     `;

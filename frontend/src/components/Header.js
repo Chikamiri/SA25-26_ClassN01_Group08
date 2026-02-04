@@ -32,9 +32,11 @@ const Header = {
                 <a href="/login" class="btn btn-outline-light btn-sm me-2">Đăng Nhập</a>
                 <a href="/admin/login" class="btn btn-outline-warning btn-sm">Admin Login</a>
               ` : `
-                <span class="navbar-text me-3 text-light">
-                  <small>Chào, ${user.email}</small>
-                </span>
+                <a href="/profile" class="text-decoration-none me-3">
+                    <span class="navbar-text text-light">
+                      <small>Chào, ${user.email}</small>
+                    </span>
+                </a>
                 <button id="logout-btn" class="btn btn-danger btn-sm">Đăng xuất</button>
               `}
             </div>

@@ -151,6 +151,9 @@ class BookingService:
     def get_booking_details(self, booking_id):
         return self.booking_repo.get_booking(booking_id)
 
+    def update_booking_status(self, booking_id, status):
+        return self.booking_repo.update_booking_status(booking_id, status)
+
     def delete_booking(self, booking_id):
         return self.booking_repo.delete_booking(booking_id)
 
