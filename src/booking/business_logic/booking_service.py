@@ -46,11 +46,19 @@ class BookingService:
         except Exception as e:
             print(f"[ERROR] RabbitMQ Error: {e}")
 
-    def book_ticket(self, showtime_id, seat_number, email):
-        if not self.booking_repo.is_seat_available(showtime_id, seat_number):
-            raise ValueError(f"Seat {seat_number} is not available")
+    def book_ticket(self, showtime_id, seat_numbers, email):
+        if not isinstance(seat_numbers, list):
+            seat_numbers = [seat_numbers]
 
-        price = 50000             
+        if not seat_numbers:
+             raise ValueError("No seats selected")
+
+        # 1. Check availability for ALL seats first
+        for seat in seat_numbers:
+            if not self.booking_repo.is_seat_available(showtime_id, seat):
+                raise ValueError(f"Seat {seat} is not available")
+
+        base_price = 50000             
         movie_title = "Unknown"   
         
         try:
@@ -59,7 +67,7 @@ class BookingService:
                 raise ValueError("Showtime not found")
             
             showtime_info = resp.json()
-            price = showtime_info.get('price', 50000)
+            base_price = showtime_info.get('price', 50000)
             movie_id = showtime_info.get('movie_id')
 
             if movie_id:
@@ -70,14 +78,38 @@ class BookingService:
         except requests.exceptions.ConnectionError:
             print("Warning: Cannot connect to Movie Service to verify details. Using defaults.")
 
-        booking_id = self.booking_repo.create_booking(showtime_id, seat_number, email, price)
+        created_bookings = []
+        total_booking_amount = 0
+
+        try:
+            for seat_num in seat_numbers:
+                # Fetch seat info to get surcharge
+                seat_info = self.booking_repo.get_seat_details(showtime_id, seat_num)
+                surcharge = seat_info['price_surcharge'] if seat_info else 0
+                final_price = base_price + surcharge
+                
+                total_booking_amount += final_price
+
+                bk_id = self.booking_repo.create_booking(showtime_id, seat_num, email, final_price)
+                created_bookings.append({"id": bk_id, "seat": seat_num})
+        except Exception as e:
+            # Rollback: Delete any bookings created in this session
+            print(f"Booking failed for one seat, rolling back {len(created_bookings)} bookings. Error: {e}")
+            for bk in created_bookings:
+                try:
+                    self.booking_repo.delete_booking(bk['id'])
+                except:
+                    pass # Best effort rollback
+            raise e
         
-        self.send_ticket_email(booking_id, email, seat_number, movie_title)
+        # Send emails
+        for bk in created_bookings:
+            self.send_ticket_email(bk['id'], email, bk['seat'], movie_title)
 
         return {
             "message": "Booking successful", 
-            "booking_id": booking_id, 
-            "price": price, 
+            "booking_ids": [bk['id'] for bk in created_bookings], 
+            "total_price": total_booking_amount,
             "movie": movie_title
         }
 

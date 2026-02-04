@@ -110,6 +110,14 @@ def showtime_detail(path):
         return validate_and_forward(MOVIE_SERVICE_URL, request.path, 'admin')
     return public_forward(MOVIE_SERVICE_URL, request.path)
 
+@app.route('/api/rooms', methods=['GET'])
+def rooms_list():
+    return public_forward(MOVIE_SERVICE_URL, request.path)
+
+@app.route('/api/rooms/<path:path>', methods=['GET'])
+def room_detail(path):
+    return public_forward(MOVIE_SERVICE_URL, request.path)
+
 @app.route('/api/bookings', methods=['GET','POST'])
 def bookings():
     return validate_and_forward(BOOKING_SERVICE_URL, request.path)

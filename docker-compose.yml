@@ -23,6 +23,8 @@ services:
       - PAYMENT_SERVICE_URL=http://payment_service:5003
       - USER_SERVICE_URL=http://user_service:5004
       - RABBITMQ_HOST=rabbitmq
+    volumes:
+      - ./src:/app/src
     depends_on:
       - movie_service
       - booking_service
@@ -40,7 +42,7 @@ services:
     environment:
       - RABBITMQ_HOST=rabbitmq
     volumes:
-      - ./src/movie/db:/app/src/movie/db
+      - ./src:/app/src
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -56,7 +58,7 @@ services:
       - MOVIE_SERVICE_URL=http://movie_service:5001
       - RABBITMQ_HOST=rabbitmq
     volumes:
-      - ./src/booking/db:/app/src/booking/db
+      - ./src:/app/src
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -71,6 +73,8 @@ services:
     environment:
       - BOOKING_SERVICE_URL=http://booking_service:5002
       - RABBITMQ_HOST=rabbitmq
+    volumes:
+      - ./src:/app/src
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -83,7 +87,7 @@ services:
     ports:
       - "5004:5004"
     volumes:
-      - ./src/user/db:/app/src/user/db
+      - ./src:/app/src
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -95,6 +99,8 @@ services:
     command: python src/notification/app.py
     environment:
       - RABBITMQ_HOST=rabbitmq
+    volumes:
+      - ./src:/app/src
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -107,6 +113,9 @@ services:
       - "5173:5173"
     environment:
       - VITE_API_BASE_URL=http://localhost:5000/api
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
     depends_on:
       - gateway
 
@@ -116,8 +125,8 @@ services:
       dockerfile: Dockerfile.backend
     command: python seed_db.py
     volumes:
-      - ./src/user/db:/app/src/user/db
-      - ./src/movie/db:/app/src/movie/db
+      - ./src:/app/src
+      - ./seed_db.py:/app/seed_db.py
     depends_on:
       - user_service
       - movie_service

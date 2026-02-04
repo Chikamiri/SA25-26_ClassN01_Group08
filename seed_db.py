@@ -114,9 +114,8 @@ def seed_movies():
 
     # Seed Rooms
     rooms = [
-        ("Room A (Standard)", 10, 15), # 150 seats, A-J
-        ("Room B (Small)", 8, 10),     # 80 seats, A-H
-        ("IMAX Hall", 12, 20)          # 240 seats, A-L
+        ("Standard Hall", 9, 11),      # Matches new layout (A-I, 11 seats)
+        ("IMAX Hall", 9, 11)           # IMAX now has same size, pricing handled by showtime
     ]
     
     created_room_ids = []

@@ -27,15 +27,29 @@ class BookingRepository:
                 status TEXT DEFAULT 'PENDING_PAYMENT'
             )
         ''')
+        
+        # Create seats table
         conn.execute('''
             CREATE TABLE IF NOT EXISTS seats (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 showtime_id INTEGER,
                 seat_number TEXT,
                 status TEXT DEFAULT 'available',
+                seat_type TEXT DEFAULT 'STANDARD',
+                price_surcharge INTEGER DEFAULT 0,
                 UNIQUE(showtime_id, seat_number)
             )
         ''')
+        
+        # Migration: Check for new columns
+        cursor = conn.cursor()
+        cursor.execute("PRAGMA table_info(seats)")
+        columns = [info[1] for info in cursor.fetchall()]
+        if 'seat_type' not in columns:
+            conn.execute("ALTER TABLE seats ADD COLUMN seat_type TEXT DEFAULT 'STANDARD'")
+        if 'price_surcharge' not in columns:
+            conn.execute("ALTER TABLE seats ADD COLUMN price_surcharge INTEGER DEFAULT 0")
+
         conn.commit()
         conn.close()
 
@@ -48,41 +62,74 @@ class BookingRepository:
         conn.close()
         return row and row['status'] == 'available'
 
+    def get_seat_details(self, showtime_id, seat_number):
+        conn = self._get_connection()
+        row = conn.execute(
+            'SELECT * FROM seats WHERE showtime_id = ? AND seat_number = ?',
+            (showtime_id, seat_number)
+        ).fetchone()
+        conn.close()
+        return dict(row) if row else None
+
     def get_seats_by_showtime_realistic(self, showtime_id, rows_count, seats_per_row):
         conn = self._get_connection()
-        rows = conn.execute('SELECT seat_number, status FROM seats WHERE showtime_id = ?', (showtime_id,)).fetchall()
+        rows = conn.execute('SELECT seat_number, status, seat_type, price_surcharge FROM seats WHERE showtime_id = ?', (showtime_id,)).fetchall()
         conn.close()
         
         if not rows:
             self.create_seats_realistic(showtime_id, rows_count, seats_per_row)
             conn = self._get_connection()
-            rows = conn.execute('SELECT seat_number, status FROM seats WHERE showtime_id = ?', (showtime_id,)).fetchall()
+            rows = conn.execute('SELECT seat_number, status, seat_type, price_surcharge FROM seats WHERE showtime_id = ?', (showtime_id,)).fetchall()
             conn.close()
 
         return [dict(row) for row in rows]
 
     def create_seats_realistic(self, showtime_id, rows_count, seats_per_row):
         conn = self._get_connection()
-        # Row letters: A, B, C, ...
-        # i = 0 -> A, i = 1 -> B ...
+        # Row letters: A, B, C...
         for r in range(rows_count):
             row_letter = chr(65 + r) # 65 is 'A'
+            
+            # Special Handling for Row I (index 8): Couple Seats
+            if r == 8:
+                for s in range(1, 10, 2): # 1, 3, 5, 7, 9
+                    seat_name = f"{row_letter}{s}-{s+1}"
+                    conn.execute(
+                        'INSERT OR IGNORE INTO seats (showtime_id, seat_number, seat_type, price_surcharge) VALUES (?, ?, ?, ?)', 
+                        (showtime_id, seat_name, 'COUPLE', 50000)
+                    )
+                continue
+
+            # Standard / VIP Rows (A-H)
             for s in range(1, seats_per_row + 1):
                 seat_name = f"{row_letter}{s}"
-                conn.execute('INSERT OR IGNORE INTO seats (showtime_id, seat_number) VALUES (?, ?)', (showtime_id, seat_name))
+                
+                # Determine Type
+                s_type = 'STANDARD'
+                surcharge = 0
+                
+                # Logic: Rows E-H (indices 4-7) AND Seats 4-8 -> VIP
+                if (4 <= r <= 7) and (4 <= s <= 8):
+                    s_type = 'VIP'
+                    surcharge = 20000
+                
+                conn.execute(
+                    'INSERT OR IGNORE INTO seats (showtime_id, seat_number, seat_type, price_surcharge) VALUES (?, ?, ?, ?)', 
+                    (showtime_id, seat_name, s_type, surcharge)
+                )
         conn.commit()
         conn.close()
 
     def get_seats_by_showtime(self, showtime_id):
         conn = self._get_connection()
-        rows = conn.execute('SELECT seat_number, status FROM seats WHERE showtime_id = ?', (showtime_id,)).fetchall()
+        rows = conn.execute('SELECT seat_number, status, seat_type, price_surcharge FROM seats WHERE showtime_id = ?', (showtime_id,)).fetchall()
         conn.close()
         
-        # Fallback Lazy Init: Default 50 seats (S1-S50) if no room info and no seats
+        # Fallback Lazy Init (Generic)
         if not rows:
             self.create_seats(showtime_id, 50)
             conn = self._get_connection()
-            rows = conn.execute('SELECT seat_number, status FROM seats WHERE showtime_id = ?', (showtime_id,)).fetchall()
+            rows = conn.execute('SELECT seat_number, status, seat_type, price_surcharge FROM seats WHERE showtime_id = ?', (showtime_id,)).fetchall()
             conn.close()
 
         return [dict(row) for row in rows]

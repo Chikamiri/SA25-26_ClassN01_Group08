@@ -2,14 +2,18 @@
   font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
+  --primary-color: #0d6efd;
+  --secondary-color: #6c757d;
+  --bg-light: #f8f9fa;
+  --text-dark: #212529;
 }
 
 body {
   margin: 0;
   display: block;
   min-width: 320px;
-  background-color: #f8f9fa;
-  color: #212529;
+  background-color: var(--bg-light);
+  color: var(--text-dark);
 }
 
 #root {
@@ -32,13 +36,223 @@ body {
   padding-bottom: 3rem;
 }
 
-/* Custom styles for seats */
-.seat-item:hover {
-  transform: scale(1.1);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-
 .spinner-border {
   width: 3rem;
   height: 3rem;
+}
+
+/* --- Date Ribbon Styles --- */
+.date-ribbon {
+  display: flex;
+  overflow-x: auto;
+  gap: 10px;
+  padding-bottom: 10px;
+  scrollbar-width: thin;
+}
+
+.date-tab {
+  min-width: 80px;
+  text-align: center;
+  padding: 10px;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  background-color: white;
+  transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.date-tab:hover {
+  border-color: #dee2e6;
+  background-color: #e9ecef;
+}
+
+.date-tab.active {
+  border-color: var(--primary-color);
+  background-color: #e7f1ff;
+  color: var(--primary-color);
+  font-weight: bold;
+}
+
+.date-tab .day-name {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  display: block;
+}
+
+.date-tab .date-val {
+  font-size: 1.2rem;
+  display: block;
+}
+
+/* --- Time Card Styles --- */
+.time-card {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 15px;
+  text-align: center;
+  background: white;
+  transition: all 0.2s;
+}
+
+.time-card:hover {
+  border-color: var(--primary-color);
+  background-color: var(--primary-color);
+  color: white !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.time-card:hover .text-muted {
+  color: rgba(255,255,255,0.8) !important;
+}
+
+.time-card .time {
+  font-size: 1.25rem;
+  font-weight: bold;
+  display: block;
+  margin-bottom: 5px;
+}
+
+/* --- Cinema Seat Styles --- */
+.cinema-screen {
+  background: linear-gradient(to bottom, #e9ecef 0%, #fff 100%);
+  height: 60px;
+  width: 80%;
+  margin: 0 auto 50px;
+  transform: perspective(600px) rotateX(-15deg) scale(0.9);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #adb5bd;
+  font-weight: bold;
+  letter-spacing: 5px;
+  border-top: 4px solid #dee2e6;
+}
+
+.seat-row {
+  display: flex;
+  justify-content: center;
+  gap: 8px; /* Gap between seats */
+  margin-bottom: 12px; /* Gap between rows */
+}
+
+.seat-row-label {
+  width: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: #adb5bd;
+}
+
+.seat-item {
+  width: 40px;
+  height: 40px;
+  position: relative;
+  background-color: #fff;
+  border: 1px solid #ced4da;
+  border-radius: 8px 8px 4px 4px; /* Chair shape */
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #495057;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.seat-item::after {
+  /* Armrest/Cushion simulation */
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 2px;
+  right: 2px;
+  height: 4px;
+  background-color: rgba(0,0,0,0.1);
+  border-radius: 2px;
+}
+
+.seat-item:hover {
+  transform: scale(1.1);
+  z-index: 2;
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.seat-item.booked,
+.seat-legend-item.booked {
+  background-color: #343a40 !important;
+  border-color: #343a40 !important;
+  color: #adb5bd;
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
+.seat-item.booked:hover {
+  transform: none;
+  border-color: #dee2e6;
+}
+
+.seat-item.selected {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+  color: white;
+  box-shadow: 0 0 10px rgba(13, 110, 253, 0.5);
+  transform: scale(1.1);
+}
+
+.seat-item.selected::after {
+  background-color: rgba(255,255,255,0.3);
+}
+
+.seat-legend-item {
+  width: 30px;
+  height: 30px;
+  border-radius: 6px 6px 3px 3px;
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 5px;
+  border: 1px solid #ced4da;
+}
+
+/* --- Seat Types --- */
+.seat-item.vip,
+.seat-legend-item.vip {
+  border-color: #ffc107;
+  color: #856404;
+}
+
+.seat-item.vip.selected {
+  background-color: #ffc107;
+  border-color: #ffc107;
+  color: #000;
+}
+
+.seat-item.couple,
+.seat-legend-item.couple {
+  border-color: #e83e8c;
+  color: #d63384;
+}
+
+.seat-item.couple {
+  width: 88px; /* Approx 2x + gap */
+}
+
+.seat-item.couple.selected {
+  background-color: #e83e8c;
+  border-color: #e83e8c;
+  color: #fff;
+}
+
+.seat-aisle-right {
+  margin-right: 30px;
 }

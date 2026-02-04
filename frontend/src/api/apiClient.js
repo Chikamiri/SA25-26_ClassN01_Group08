@@ -87,6 +87,11 @@ export async function getShowtimes(movieId = null) {
   return request(endpoint, { method: 'GET' });
 }
 
+// Lấy chi tiết một suất chiếu
+export async function getShowtimeDetail(id) {
+  return request(`showtimes/${id}`, { method: 'GET' });
+}
+
 // Lấy danh sách ghế của suất chiếu
 export async function getShowtimeSeats(showtimeId) {
   return request(`showtimes/${showtimeId}/seats`, { method: 'GET' });
@@ -95,6 +100,10 @@ export async function getShowtimeSeats(showtimeId) {
 // Lấy danh sách phòng chiếu
 export async function getRooms() {
   return request('rooms', { method: 'GET' });
+}
+
+export async function getRoomById(id) {
+  return request(`rooms/${id}`, { method: 'GET' });
 }
 
 // --- Các hàm API liên quan đến Đặt vé ---

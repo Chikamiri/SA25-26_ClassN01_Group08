@@ -81,3 +81,13 @@
 - Replaced manual seat text input with a 10x10 interactive visual seat map; added "My Bookings" page with real API data.
 - Big UI changes.
 - Add '.db' to .gitignore
+
+## 4/2/2026
+
+- Redesign booking UI
+- Implement tabbed Date Ribbon and Time Grid
+- Support multi-seat booking
+- Implement tiered seat system (Standard, VIP, Couple) with dynamic price surcharges
+- Enable Docker hot-reload
+- Create reset_db.py and update seed_db.py
+- Various bug fixes and clean-up

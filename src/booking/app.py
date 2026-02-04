@@ -19,7 +19,15 @@ def book_ticket():
         return jsonify({"error": "Unauthorized: Access via Gateway"}), 401
 
     try:
-        res = booking_service.book_ticket(data['showtime_id'], data['seat_number'], user_email)
+        # Support both 'seat_numbers' (list) and legacy 'seat_number' (string)
+        seats = data.get('seat_numbers')
+        if not seats:
+            if 'seat_number' in data:
+                seats = [data['seat_number']]
+            else:
+                return jsonify({"error": "No seats provided"}), 400
+
+        res = booking_service.book_ticket(data['showtime_id'], seats, user_email)
         return jsonify(res), 201
     except Exception as e: return jsonify({"error": str(e)}), 400
 
