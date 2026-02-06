@@ -97,3 +97,14 @@
 - Various bug fixes and clean-up
 - Add '.db' to .gitignore
 - Update admin panel
+
+## 6/2/2026
+
+- Major overhaul of the test suite structure
+- Added comprehensive unit and integration tests for User, Movie, Booking, and Payment services
+- Refactored `test_api.py` and implemented a new `base.py` for shared test logic
+- Included `test_case.pdf` in the documentation
+
+## 7/2/2026
+
+- Update C4 Model (Level 4) diagrams
