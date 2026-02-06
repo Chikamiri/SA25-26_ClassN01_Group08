@@ -35,7 +35,7 @@
 ## 3/1/2026
 
 - Add Api gateway
-- Add run_app.py 
+- Add run_app.py
 
 ## 9/1/2026
 
@@ -59,20 +59,24 @@
 - Update Notification
 
 ## 14/1/2026, 16:48
+
 - Create issue report file
 - Fix issue related to how process stop in Linux
 - Modify database path resolution
 - Update test file to match with new code
 
 ## 14/1/2026, 17:40
+
 - Add more tests
 
 ## 28/1/2026
+
 - Fix frontend login bug (mismatched 'email' vs 'username' keys)
 - Fix missing Admin management routes in frontend router
 - Create AdminMoviesPage and AdminShowtimesPage for movie/showtime management
 
 ## 2/2/2026
+
 - Refactored Gateway to use `flask-cors` properly; allowed custom headers `peko-key`, `Authorization`, `X-User-Email` to fix "Missing or Invalid Header" errors.
 - Enabled CORS for all individual microservices (`user`, `movie`, `booking`, `payment`) for easier testing and isolation.
 - Implemented atomic seat locking (SQL `UPDATE ... WHERE status='available'`) in `BookingRepository` to prevent double-booking (ASR 2 compliance).
@@ -108,3 +112,7 @@
 ## 7/2/2026
 
 - Update C4 Model (Level 4) diagrams
+- Enhanced test orchestration in `test_api.py` with automated log redirection to prevent process hanging.
+- Updated `.gitignore` to ignore the `/logs` directory and all database variations (`*.db*`).
+- Modified `docker-compose.yml` to support running integration tests within Docker containers.
+- Integrated `tests/` and `logs/` volumes into backend containers for streamlined debugging and persistence.

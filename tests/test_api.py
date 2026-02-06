@@ -40,12 +40,17 @@ def wait_for_services(timeout=30):
     return True
 
 def run_suite():
+    # 0. Create logs folder
+    if not os.path.exists('logs'):
+        os.makedirs('logs')
+
     # 1. Dọn dẹp
     clean_databases()
     
     # 2. Khởi động Services
     print(f"\n{Colors.BOLD}{Colors.HEADER}>>> STARTING SERVICES <<<{Colors.RESET}")
     processes = []
+    log_files = []
     env = os.environ.copy()
     env['PYTHONPATH'] = os.path.join(os.getcwd(), 'src')
     env['PYTHONUNBUFFERED'] = '1'
@@ -54,7 +59,12 @@ def run_suite():
     for name, config in SERVICES_CONFIG.items():
         full_path = os.path.join(*config['path'].split('/'))
         print(f" -> Launching {name.upper()}...")
-        p = subprocess.Popen([python_exec, full_path], env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        
+        out_log = open(f"logs/{name}_out.log", "w")
+        err_log = open(f"logs/{name}_err.log", "w")
+        log_files.extend([out_log, err_log])
+
+        p = subprocess.Popen([python_exec, full_path], env=env, stdout=out_log, stderr=err_log)
         processes.append(p)
 
     # 3. Chờ Services
@@ -82,6 +92,7 @@ def run_suite():
     # 5. Dọn dẹp
     print(f"\n{Colors.BOLD}{Colors.HEADER}>>> STOPPING SERVICES <<<{Colors.RESET}")
     for p in processes: p.terminate()
+    for f in log_files: f.close()
     
     if not result.wasSuccessful():
         sys.exit(1)
