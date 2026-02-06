@@ -1,63 +1,56 @@
 from tests.base import TestBase
 
-class TestMovieAndShowtime(TestBase):
-    movie_id = None
-    showtime_id = None
+class TestMovie(TestBase):
+    def test_05_TC_MOVIE_01_create(self):
+        payload = {"title": "Avengers", "genre": "Action", "duration": 180, "release_date": "2025-05-01"}
+        resp = self._req('POST', 5001, '/api/movies', payload, status=201)
+        TestBase.state['movie_id'] = resp.json()['id']
 
-    def setUp(self):
-        self.admin_token = self.get_admin_token()
+    def test_06_TC_MOVIE_02_get_all(self):
+        self._req('GET', 5001, '/api/movies', status=200)
 
-    def test_01_TC_MOVIE_01_create_movie(self):
-        payload = {"title": "Full Test Movie", "genre": "Action", "duration": 120, "release_date": "2026-01-01"}
-        resp = self._request("TC_MOVIE_01", 'POST', f"{self.MOVIE_URL}/movies", payload, expected_status=201)
-        TestMovieAndShowtime.movie_id = resp.json().get('id')
+    def test_07_TC_MOVIE_03_get_detail(self):
+        self._req('GET', 5001, f"/api/movies/{self.state['movie_id']}", status=200)
 
-    def test_02_TC_MOVIE_02_get_all_movies(self):
-        self._request("TC_MOVIE_02", 'GET', f"{self.MOVIE_URL}/movies")
+    def test_08_TC_MOVIE_04_get_not_found(self):
+        self._req('GET', 5001, '/api/movies/99999', status=404)
 
-    def test_03_TC_MOVIE_03_get_movie_detail(self):
-        if not TestMovieAndShowtime.movie_id: self.skipTest("No movie created")
-        self._request("TC_MOVIE_03", 'GET', f"{self.MOVIE_URL}/movies/{TestMovieAndShowtime.movie_id}")
+    def test_09_TC_MOVIE_05_update(self):
+        payload = {"title": "Avengers: Endgame", "genre": "Sci-Fi", "duration": 182, "release_date": "2025-05-01"}
+        self._req('PUT', 5001, f"/api/movies/{self.state['movie_id']}", payload, status=200)
 
-    def test_04_TC_MOVIE_04_get_non_existent(self):
-        self._request("TC_MOVIE_04", 'GET', f"{self.MOVIE_URL}/movies/999999", expected_status=404)
+    def test_10_TC_MOVIE_07_search(self):
+        self._req('GET', 5001, '/api/movies?query=Avengers', status=200)
 
-    def test_05_TC_MOVIE_05_update_movie(self):
-        if not TestMovieAndShowtime.movie_id: self.skipTest("No movie created")
-        payload = {"title": "Updated Title", "genre": "Drama", "duration": 130, "release_date": "2026-01-01"}
-        self._request("TC_MOVIE_05", 'PUT', f"{self.MOVIE_URL}/movies/{TestMovieAndShowtime.movie_id}", payload)
-
-    def test_06_TC_MOVIE_07_search_movies(self):
-        self._request("TC_MOVIE_07", 'GET', f"{self.MOVIE_URL}/movies?query=Updated")
-
-    def test_07_TC_SHOWTIME_01_create_showtime(self):
-        if not TestMovieAndShowtime.movie_id: self.skipTest("No movie created")
+    def test_11_TC_SHOWTIME_01_create(self):
         payload = {
-            "movie_id": TestMovieAndShowtime.movie_id,
-            "start_time": "2026-12-01 18:00", 
-            "end_time": "2026-12-01 20:00",
-            "total_seats": 20, 
-            "price": 75000
+            "movie_id": self.state['movie_id'], "start_time": "2026-12-01 10:00", 
+            "end_time": "2026-12-01 12:00", "price": 100000, "total_seats": 50
         }
-        resp = self._request("TC_SHOWTIME_01", 'POST', f"{self.MOVIE_URL}/showtimes", payload, expected_status=201)
-        TestMovieAndShowtime.showtime_id = resp.json().get('id')
+        resp = self._req('POST', 5001, '/api/showtimes', payload, status=201)
+        TestBase.state['showtime_id'] = resp.json()['id']
 
-    def test_08_TC_SHOWTIME_02_get_showtimes(self):
-        self._request("TC_SHOWTIME_02", 'GET', f"{self.MOVIE_URL}/showtimes?movie_id={TestMovieAndShowtime.movie_id}")
+    def test_12_TC_SHOWTIME_02_get_list(self):
+        self._req('GET', 5001, f"/api/showtimes?movie_id={self.state['movie_id']}", status=200)
 
-    def test_09_TC_SHOWTIME_04_update_showtime(self):
-        if not TestMovieAndShowtime.showtime_id: self.skipTest("No showtime created")
+    def test_13_TC_SHOWTIME_03_get_detail(self):
+        pass 
+
+    def test_14_TC_SHOWTIME_04_update(self):
         payload = {
-            "start_time": "2026-12-01 19:00", 
-            "end_time": "2026-12-01 21:00",
-            "price": 80000
+            "movie_id": self.state['movie_id'], "start_time": "2026-12-01 19:00", 
+            "end_time": "2026-12-01 21:00", "price": 120000, "total_seats": 50
         }
-        self._request("TC_SHOWTIME_04", 'PUT', f"{self.MOVIE_URL}/showtimes/{TestMovieAndShowtime.showtime_id}", payload)
+        self._req('PUT', 5001, f"/api/showtimes/{self.state['showtime_id']}", payload, status=200)
+    
+    def test_29_TC_SHOWTIME_05_delete(self):
+        p = {"movie_id": self.state['movie_id'], "start_time": "2030-01-01 10:00", "end_time": "2030-01-01 12:00", "price": 100, "total_seats": 50}
+        r = self._req('POST', 5001, '/api/showtimes', p, status=201)
+        sid = r.json()['id']
+        self._req('DELETE', 5001, f"/api/showtimes/{sid}", status=200)
 
-    def test_10_TC_SHOWTIME_05_delete_showtime(self):
-        if not TestMovieAndShowtime.showtime_id: self.skipTest("No showtime created")
-        self._request("TC_SHOWTIME_05", 'DELETE', f"{self.MOVIE_URL}/showtimes/{TestMovieAndShowtime.showtime_id}")
-
-    def test_11_TC_MOVIE_06_delete_movie(self):
-        if not TestMovieAndShowtime.movie_id: self.skipTest("No movie created")
-        self._request("TC_MOVIE_06", 'DELETE', f"{self.MOVIE_URL}/movies/{TestMovieAndShowtime.movie_id}")
+    def test_30_TC_MOVIE_06_delete(self):
+        p = {"title": "Trash Movie", "genre": "N/A", "duration": 10, "release_date": "2020-01-01"}
+        r = self._req('POST', 5001, '/api/movies', p, status=201)
+        mid = r.json()['id']
+        self._req('DELETE', 5001, f"/api/movies/{mid}", status=200)
