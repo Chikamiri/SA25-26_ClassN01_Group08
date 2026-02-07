@@ -64,9 +64,22 @@ const MoviesPage = {
     // Initial fetch
     await fetchAndRenderMovies();
 
+    // Debounce helper
+    const debounce = (func, delay) => {
+      let timeout;
+      return (...args) => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), delay);
+      };
+    };
+
+    const debouncedSearch = debounce((query) => {
+      fetchAndRenderMovies(query);
+    }, 500);
+
     // Search event
     searchInput.addEventListener('input', (e) => {
-        fetchAndRenderMovies(e.target.value);
+      debouncedSearch(e.target.value);
     });
   }
 };
