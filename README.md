@@ -59,19 +59,29 @@ The system is split into the following microservices:
 
 ### 1. Automated Integration Tests
 
-We have a built-in test script that sets up the environment, starts both services, runs a sequence of API tests, and verifies the responses.
+We have a built-in test script that sets up the environment, starts all services, runs a sequence of API tests, and verifies the responses. Service logs are automatically redirected to the `/logs` directory for easier debugging.
 
-**To run the automated tests:**
+#### A. Running via Docker (Recommended)
+
+This is the most reliable method as it handles RabbitMQ and service networking automatically.
 
 ```bash
-# Linux / MacOS
-export PYTHONPATH=$(pwd)/src && python tests/test_api.py
-
-# Windows (PowerShell) - Set PYTHONPATH first
-$env:PYTHONPATH = "$(Get-Location)\src"; python tests/test_api.py
+docker compose run --rm movie_service python tests/test_api.py
 ```
 
-*You should see output indicating services starting, requests being made, and JSON responses.*
+#### B. Running Locally
+
+Ensure you have RabbitMQ running locally if you want to test notification features.
+
+```bash
+# Windows (PowerShell)
+$env:PYTHONPATH = "src"; venv\Scripts\python.exe tests/test_api.py
+
+# Linux / MacOS
+export PYTHONPATH=src && venv/bin/python tests/test_api.py
+```
+
+*Logs will be generated in the `logs/` folder. You can check `{service}_err.log` if a service fails to start or responds with an error.*
 
 ### 2. Manual Testing
 
@@ -82,6 +92,7 @@ You can also run the services manually and test them using `curl` or Postman.
 You need to open **two separate terminal windows** (one for each service). Don't forget to activate `venv` in both.
 
 **Terminal 1 (Movie Service):**
+
 ```bash
 # Linux / MacOS
 export PYTHONPATH=$(pwd)/src && python src/movie/app.py
@@ -91,6 +102,7 @@ $env:PYTHONPATH = "$(Get-Location)\src"; python src/movie/app.py
 ```
 
 **Terminal 2 (Booking Service):**
+
 ```bash
 # Linux / MacOS
 export PYTHONPATH=$(pwd)/src && python src/booking/app.py
@@ -102,6 +114,7 @@ $env:PYTHONPATH = "$(Get-Location)\src"; python src/booking/app.py
 #### Step 2: Send Requests
 
 **Create a Movie (Movie Service - Port 5001):**
+
 ```bash
 curl -X POST http://127.0.0.1:5001/api/movies \
      -H "Content-Type: application/json" \
@@ -114,11 +127,13 @@ curl -X POST http://127.0.0.1:5001/api/movies \
 ```
 
 **Get All Movies:**
+
 ```bash
 curl http://127.0.0.1:5001/api/movies
 ```
 
 **Create a Booking (Booking Service - Port 5002):**
+
 ```bash
 curl -X POST http://127.0.0.1:5002/api/bookings \
      -H "Content-Type: application/json" \
@@ -131,6 +146,7 @@ curl -X POST http://127.0.0.1:5002/api/bookings \
 ```
 
 **Get Booking Details:**
+
 ```bash
 # Replace <booking_id> with the ID returned from the previous step (e.g., 1)
 curl http://127.0.0.1:5002/api/bookings/1
