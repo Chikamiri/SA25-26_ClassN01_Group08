@@ -1,4 +1,4 @@
-import { getMovieById, getShowtimes } from '../api/apiClient.js';
+import { getMovieById, getShowtimes, getRooms } from '../api/apiClient.js';
 
 const MovieDetailsPage = {
   render: async () => {
@@ -31,15 +31,19 @@ const MovieDetailsPage = {
     }
 
     try {
-        const [movie, showtimes] = await Promise.all([
+        const [movie, showtimes, allRooms] = await Promise.all([
             getMovieById(id),
-            getShowtimes(id)
+            getShowtimes(id),
+            getRooms()
         ]);
 
         if (!movie) {
              container.innerHTML = '<div class="alert alert-danger">Movie not found.</div>';
              return;
         }
+
+        const roomMap = {};
+        allRooms.forEach(r => roomMap[r.id] = r.name);
 
         // --- Logic: Group Showtimes by Date ---
         const groupedShowtimes = {};
@@ -65,56 +69,10 @@ const MovieDetailsPage = {
             };
         };
 
-        // Render function for Schedule
-        const renderSchedule = () => {
-             if (dates.length === 0) {
-                 return '<div class="p-4 bg-light rounded text-center text-muted">No showtimes available.</div>';
-             }
-
-             // Tabs HTML
-             const tabsHtml = dates.map((dateStr, index) => {
-                 const label = getDayLabel(dateStr);
-                 const isActive = index === 0 ? 'active' : '';
-                 return `
-                    <div class="date-tab ${isActive}" data-date="${dateStr}">
-                        <span class="day-name">${label.day}</span>
-                        <span class="date-val">${label.date}</span>
-                    </div>
-                 `;
-             }).join('');
-
-             // Grids HTML (All hidden except first)
-             const gridsHtml = dates.map((dateStr, index) => {
-                 const isHidden = index === 0 ? '' : 'display: none;';
-                 const shows = groupedShowtimes[dateStr].sort((a,b) => a.time.localeCompare(b.time));
-                 
-                 return `
-                    <div class="schedule-grid row g-3" id="grid-${dateStr}" style="${isHidden}">
-                        ${shows.map(st => `
-                            <div class="col-6 col-sm-4 col-md-3">
-                                <a href="/book/${st.id}" class="time-card">
-                                    <span class="time">${st.time}</span>
-                                    <small class="text-muted d-block">${st.price.toLocaleString()} VND</small>
-                                </a>
-                            </div>
-                        `).join('')}
-                    </div>
-                 `;
-             }).join('');
-
-             return `
-                <div class="mb-4">
-                    <div class="date-ribbon mb-4" id="date-ribbon">
-                        ${tabsHtml}
-                    </div>
-                    ${gridsHtml}
-                </div>
-             `;
-        };
-
+        // Render Structure
         container.innerHTML = `
             <div class="row g-5">
-              <div class="col-md-4">
+              <div class="col-md-3">
                 <div class="card border-0 shadow-sm sticky-top" style="top: 2rem; z-index: 1;">
                   <div class="card-body bg-dark text-white rounded p-5 text-center d-flex align-items-center justify-content-center" style="min-height: 400px;">
                     <div>
@@ -124,7 +82,7 @@ const MovieDetailsPage = {
                   </div>
                 </div>
               </div>
-              <div class="col-md-8">
+              <div class="col-md-9">
                 <h1 class="fw-bold mb-2">${movie.title}</h1>
                 <div class="mb-4">
                   <span class="badge bg-primary me-2">${movie.genre}</span>
@@ -135,28 +93,135 @@ const MovieDetailsPage = {
                 <p class="lead text-muted mb-5">${movie.description || 'No description available for this movie.'}</p>
                 
                 <h4 class="fw-bold mb-4">Showtimes</h4>
-                ${renderSchedule()}
+                
+                <div id="schedule-container">
+                    <!-- Date Scroller -->
+                    <div class="mb-2">
+                        <label class="form-label small text-muted mb-0">Select Date</label>
+                    </div>
+                    <div class="d-flex align-items-stretch gap-2 mb-4">
+                        <button id="prev-dates-btn" class="btn btn-outline-secondary btn-sm px-2" title="Previous dates">
+                            <i class="bi bi-chevron-left"></i>
+                        </button>
+                        
+                        <div class="date-scroller flex-grow-1" id="date-scroller">
+                            <!-- Date items will be injected here -->
+                        </div>
+
+                        <button id="next-dates-btn" class="btn btn-outline-secondary btn-sm px-2" title="Next dates">
+                            <i class="bi bi-chevron-right"></i>
+                        </button>
+                    </div>
+
+                    <!-- Times Grid -->
+                    <div id="showtimes-grid"></div>
+                </div>
               </div>
             </div>
         `;
 
-        // Event Listeners for Tabs
-        const tabs = document.querySelectorAll('.date-tab');
-        tabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                // Remove active class from all
-                tabs.forEach(t => t.classList.remove('active'));
-                // Add active to clicked
-                tab.classList.add('active');
-                
-                // Hide all grids
-                document.querySelectorAll('.schedule-grid').forEach(g => g.style.display = 'none');
-                
-                // Show selected grid
-                const targetId = `grid-${tab.dataset.date}`;
-                document.getElementById(targetId).style.display = 'flex';
+        // --- Logic for Date Scroller & Grid ---
+        const scroller = document.getElementById('date-scroller');
+        const prevBtn = document.getElementById('prev-dates-btn');
+        const nextBtn = document.getElementById('next-dates-btn');
+        const timesGrid = document.getElementById('showtimes-grid');
+
+        if (dates.length === 0) {
+            timesGrid.innerHTML = '<div class="alert alert-info">No showtimes available.</div>';
+            return;
+        }
+
+        let currentPage = 0;
+        const datesPerPage = 8;
+        const totalPages = Math.ceil(dates.length / datesPerPage);
+
+        const renderTimes = (dateStr) => {
+            const shows = groupedShowtimes[dateStr];
+            if (!shows) {
+                timesGrid.innerHTML = '<div class="alert alert-warning">No shows found for this date.</div>';
+                return;
+            }
+            shows.sort((a,b) => a.time.localeCompare(b.time));
+
+            timesGrid.innerHTML = `
+                <div class="row g-3">
+                    ${shows.map(st => {
+                        const roomName = roomMap[st.room_id] || 'Room';
+                        return `
+                        <div class="col-6 col-sm-4 col-md-3 col-lg-2">
+                            <a href="/book/${st.id}" class="btn btn-outline-primary w-100 h-100 d-flex flex-column justify-content-center align-items-center p-2">
+                                <span class="fw-bold mb-1">${st.time}</span>
+                                <div class="small text-muted" style="font-size: 0.7rem;">
+                                    <div class="border-bottom pb-1 mb-1">${roomName}</div>
+                                    <div>${st.price.toLocaleString()} VND</div>
+                                </div>
+                            </a>
+                        </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        };
+
+        const renderDatePage = (activeDate) => {
+            const start = currentPage * datesPerPage;
+            const end = start + datesPerPage;
+            const pageDates = dates.slice(start, end);
+
+            // Update Buttons
+            prevBtn.disabled = currentPage === 0;
+            nextBtn.disabled = currentPage >= totalPages - 1;
+
+            scroller.innerHTML = pageDates.map(dStr => {
+                const { day, date } = getDayLabel(dStr);
+                const isActive = dStr === activeDate ? 'active' : '';
+                return `
+                    <div class="date-scroller-item ${isActive}" data-date="${dStr}">
+                        <span class="date-scroller-day">${day}</span>
+                        <span class="date-scroller-date">${date}</span>
+                    </div>
+                `;
+            }).join('');
+
+            // Add Events
+            scroller.querySelectorAll('.date-scroller-item').forEach(el => {
+                el.addEventListener('click', () => {
+                    const newDate = el.dataset.date;
+                    renderDatePage(newDate); // Re-render to update active class
+                    renderTimes(newDate);
+                });
             });
+        };
+
+        // Navigation Events
+        prevBtn.addEventListener('click', () => {
+            if (currentPage > 0) {
+                currentPage--;
+                // Keep current selection active visualization if it's on the new page
+                // But for simplicity, we just re-render the page. 
+                // The currently selected date is not tracked globally in this scope 
+                // except by looking at the 'active' class, but that's DOM based.
+                // Let's assume we don't change the selection when paging unless clicked.
+                // We need to pass the currently active date to keep it highlighted.
+                const activeEl = scroller.querySelector('.active');
+                const currentActiveDate = activeEl ? activeEl.dataset.date : dates[0];
+                renderDatePage(currentActiveDate);
+            }
         });
+
+        nextBtn.addEventListener('click', () => {
+            if (currentPage < totalPages - 1) {
+                currentPage++;
+                const activeEl = scroller.querySelector('.active');
+                const currentActiveDate = activeEl ? activeEl.dataset.date : dates[0];
+                renderDatePage(currentActiveDate);
+            }
+        });
+
+        // Initial Render
+        // Default to first date
+        renderDatePage(dates[0]);
+        renderTimes(dates[0]);
 
     } catch (err) {
         container.innerHTML = `<div class="alert alert-danger">Error: ${err.message}</div>`;

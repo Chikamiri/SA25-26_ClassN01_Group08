@@ -1,4 +1,4 @@
-import { bookTicket, getShowtimeSeats, processPayment, getShowtimeDetail, getShowtimes, getRoomById } from '../api/apiClient.js';
+import { bookTicket, getShowtimeSeats, processPayment, getShowtimeDetail, getShowtimes, getRoomById, getRooms } from '../api/apiClient.js';
 
 const BookingsPage = {
   render: async () => {
@@ -153,7 +153,14 @@ const BookingsPage = {
 
     const loadSchedulePicker = async (movieId, currentStartTime) => {
         try {
-            const allShowtimes = await getShowtimes(movieId);
+            const [allShowtimes, allRooms] = await Promise.all([
+                getShowtimes(movieId),
+                getRooms()
+            ]);
+
+            const roomMap = {};
+            allRooms.forEach(r => roomMap[r.id] = r.name);
+
             const groupedShowtimes = {};
             
             allShowtimes.forEach(st => {
@@ -162,45 +169,150 @@ const BookingsPage = {
                 groupedShowtimes[dateStr].push({ ...st, time: timeStr });
             });
             const dates = Object.keys(groupedShowtimes).sort();
+            
+            // Current showtime date
+            const currentDateStr = currentStartTime.split(' ')[0];
+            const datesPerPage = 8;
+            
+            // Find page index for current date
+            const currentIndex = dates.indexOf(currentDateStr);
+            let currentPage = currentIndex !== -1 ? Math.floor(currentIndex / datesPerPage) : 0;
+            const totalPages = Math.ceil(dates.length / datesPerPage);
 
-            const getDayLabel = (dateStr) => {
-                const date = new Date(dateStr);
-                const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-                return `${days[date.getDay()]}, ${date.getDate()}/${date.getMonth() + 1}`;
+            if (dates.length === 0) {
+                 schedulePickerContainer.innerHTML = '<p class="text-center text-muted small">No other showtimes</p>';
+                 return;
+            }
+
+            // Helper to format date for display
+            const getDayDisplay = (dStr) => {
+                const date = new Date(dStr);
+                const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                return {
+                    day: days[date.getDay()],
+                    date: `${date.getDate()}/${date.getMonth() + 1}`
+                };
             };
 
-            const html = dates.map(dateStr => {
-                const label = getDayLabel(dateStr);
-                const shows = groupedShowtimes[dateStr].sort((a,b) => a.time.localeCompare(b.time));
-                
-                return `
-                   <div class="mb-3">
-                       <div class="d-flex align-items-center mb-2">
-                            <span class="badge bg-light text-dark border me-2"><i class="bi bi-calendar"></i></span>
-                            <span class="fw-bold small text-secondary">${label}</span>
-                       </div>
-                       <div class="d-flex flex-wrap gap-2">
-                           ${shows.map(st => {
-                               const isCurrent = st.id == showtimeId;
-                               const btnClass = isCurrent 
-                                ? 'btn-primary text-white' 
-                                : 'btn-outline-secondary';
-                               const href = isCurrent ? '#' : `/book/${st.id}`;
-                               return `
-                                   <a href="${href}" class="btn btn-sm ${btnClass} flex-grow-1" style="font-size: 0.85rem;">
-                                       ${st.time}
-                                   </a>
-                               `;
-                           }).join('')}
-                       </div>
-                   </div>
-                   <hr class="text-muted opacity-25">
-                `;
-            }).join('');
+            const pickerHtml = `
+                <div class="mb-2">
+                    <label class="form-label small text-muted mb-0">Select Date</label>
+                </div>
+                <div class="d-flex align-items-stretch gap-2 mb-3">
+                    <button id="prev-dates-btn" class="btn btn-outline-secondary btn-sm px-1" title="Previous dates">
+                        <i class="bi bi-chevron-left"></i>
+                    </button>
+                    
+                    <div class="date-scroller flex-grow-1" id="date-scroller">
+                        <!-- Date items will be injected here -->
+                    </div>
+
+                    <button id="next-dates-btn" class="btn btn-outline-secondary btn-sm px-1" title="Next dates">
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+                </div>
+                <div id="sidebar-times-container"></div>
+            `;
             
-            schedulePickerContainer.innerHTML = html || '<p class="text-center text-muted small">No other showtimes</p>';
+            schedulePickerContainer.innerHTML = pickerHtml;
+
+            const prevBtn = document.getElementById('prev-dates-btn');
+            const nextBtn = document.getElementById('next-dates-btn');
+            const scroller = document.getElementById('date-scroller');
+
+            const renderDatePage = (activeDate) => {
+                // Calculate slice
+                const start = currentPage * datesPerPage;
+                const end = start + datesPerPage;
+                const pageDates = dates.slice(start, end);
+
+                // Update Button States
+                prevBtn.disabled = currentPage === 0;
+                nextBtn.disabled = currentPage >= totalPages - 1;
+
+                scroller.innerHTML = pageDates.map(dStr => {
+                    const { day, date } = getDayDisplay(dStr);
+                    const isActive = dStr === activeDate ? 'active' : '';
+                    return `
+                        <div class="date-scroller-item ${isActive}" data-date="${dStr}">
+                            <span class="date-scroller-day">${day}</span>
+                            <span class="date-scroller-date">${date}</span>
+                        </div>
+                    `;
+                }).join('');
+
+                // Add click events
+                scroller.querySelectorAll('.date-scroller-item').forEach(el => {
+                    el.addEventListener('click', () => {
+                        const newDate = el.dataset.date;
+                        // If selected date is NOT on current page (e.g. edge case), we might need to jump
+                        // But here we are clicking ON the current page, so just re-render selection
+                        renderDatePage(newDate); 
+                        renderTimes(newDate); 
+                    });
+                });
+            };
+
+            // Pagination Controls
+            prevBtn.addEventListener('click', () => {
+                if (currentPage > 0) {
+                    currentPage--;
+                    renderDatePage(currentDateStr); // Maintain selection visualization if on page
+                }
+            });
+
+            nextBtn.addEventListener('click', () => {
+                if (currentPage < totalPages - 1) {
+                    currentPage++;
+                    renderDatePage(currentDateStr);
+                }
+            });
+
+            const renderTimes = (selectedDate) => {
+                const container = document.getElementById('sidebar-times-container');
+                const shows = groupedShowtimes[selectedDate];
+
+                if (!shows || shows.length === 0) {
+                    container.innerHTML = '<p class="text-muted small text-center fst-italic">No showtimes for this date.</p>';
+                    return;
+                }
+                
+                shows.sort((a,b) => a.time.localeCompare(b.time));
+
+                const html = `
+                    <div class="d-grid gap-2">
+                       ${shows.map(st => {
+                           const isCurrent = st.id == showtimeId;
+                           const btnClass = isCurrent 
+                            ? 'btn-primary text-white' 
+                            : 'btn-outline-secondary';
+                           const href = isCurrent ? '#' : `/book/${st.id}`;
+                           // Disable link if it's current
+                           const pointerEvents = isCurrent ? 'pointer-events: none;' : '';
+                           const roomName = roomMap[st.room_id] || 'Room';
+                           
+                           return `
+                               <a href="${href}" class="btn btn-sm ${btnClass} d-flex flex-column align-items-center py-2" style="${pointerEvents}">
+                                   <span class="fw-bold"><i class="bi bi-clock"></i> ${st.time}</span>
+                                   <div class="small opacity-75 mt-1">
+                                      <span class="me-1 border-end pe-1">${roomName}</span>
+                                      <span>${st.price.toLocaleString()} VND</span>
+                                   </div>
+                               </a>
+                           `;
+                       }).join('')}
+                   </div>
+                `;
+                container.innerHTML = html;
+            };
+
+            // Initial render
+            renderDatePage(currentDateStr);
+            renderTimes(currentDateStr);
+            
         } catch (e) {
             console.error(e);
+            schedulePickerContainer.innerHTML = '<p class="text-center text-danger small">Error loading schedule.</p>';
         }
     };
 

@@ -10,9 +10,12 @@ const AdminShowtimesPage = {
             <div class="container-fluid">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h2 class="fw-bold mb-0">Manage Showtimes</h2>
-                    <button id="add-showtime-btn" class="btn btn-primary shadow-sm">
-                        <i class="bi bi-plus-lg"></i> Add Showtime
-                    </button>
+                    <div class="d-flex align-items-center">
+                        <input type="date" id="showtime-date-filter" class="form-control me-2 shadow-sm" style="width: auto;">
+                        <button id="add-showtime-btn" class="btn btn-primary shadow-sm text-nowrap">
+                            <i class="bi bi-plus-lg"></i> Add Showtime
+                        </button>
+                    </div>
                 </div>
 
                 <div class="card shadow-sm border-0">
@@ -60,9 +63,15 @@ const AdminShowtimesPage = {
                                             <option value="">-- Select room --</option>
                                         </select>
                                     </div>
-                                    <div class="mb-3">
-                                        <label class="form-label text-muted small fw-bold text-uppercase">Start time</label>
-                                        <input type="datetime-local" id="showtime-start" class="form-control" required>
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label text-muted small fw-bold text-uppercase">Date</label>
+                                            <input type="date" id="showtime-date" class="form-control" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label text-muted small fw-bold text-uppercase">Time</label>
+                                            <input type="time" id="showtime-time" class="form-control" required>
+                                        </div>
                                     </div>
                                     <div class="mb-3">
                                         <label class="form-label text-muted small fw-bold text-uppercase">Price</label>
@@ -89,6 +98,7 @@ const AdminShowtimesPage = {
     const addBtn = document.getElementById('add-showtime-btn');
     const form = document.getElementById('showtime-form');
     const modalTitle = document.getElementById('modal-title');
+    const dateFilter = document.getElementById('showtime-date-filter');
     
     // Initialize Bootstrap Modal
     const showtimeModal = new bootstrap.Modal(document.getElementById('showtimeModal'));
@@ -97,13 +107,19 @@ const AdminShowtimesPage = {
     const idInput = document.getElementById('showtime-id');
     const movieSelect = document.getElementById('showtime-movie');
     const roomSelect = document.getElementById('showtime-room');
-    const startInput = document.getElementById('showtime-start');
+    const dateInput = document.getElementById('showtime-date');
+    const timeInput = document.getElementById('showtime-time');
     const priceInput = document.getElementById('showtime-price');
 
     let showtimesData = [];
     let moviesData = [];
     let roomsData = [];
     let bookingsData = [];
+
+    // Set Default Date Filter (Today)
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+    dateFilter.value = todayStr;
 
     const toLocalISO = (dateStr) => {
         if (!dateStr) return '';
@@ -123,14 +139,26 @@ const AdminShowtimesPage = {
         return `${year}-${month}-${day} ${hours}:${minutes}`;
     };
 
-    const renderList = (showtimes) => {
-        showtimesData = showtimes;
-        if (showtimes.length === 0) {
-            list.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-5">No showtimes yet.</td></tr>';
+    const renderList = (showtimes = null) => {
+        // Use showtimes argument or fallback to showtimesData
+        const dataToRender = showtimes || showtimesData;
+        
+        // Filter by Date
+        const selectedDate = dateFilter.value;
+        const filtered = dataToRender.filter(st => {
+            if (!st.start_time) return false;
+            return st.start_time.startsWith(selectedDate);
+        });
+
+        // Sort by Time
+        filtered.sort((a,b) => a.start_time.localeCompare(b.start_time));
+
+        if (filtered.length === 0) {
+            list.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-5">No showtimes found for this date.</td></tr>';
             return;
         }
 
-        list.innerHTML = showtimes.map(st => {
+        list.innerHTML = filtered.map(st => {
             const movie = moviesData.find(m => m.id === st.movie_id);
             const room = roomsData.find(r => r.id === st.room_id);
             const movieTitle = movie ? movie.title : `<span class="text-muted">Movie ID ${st.movie_id} (Deleted)</span>`;
@@ -140,6 +168,10 @@ const AdminShowtimesPage = {
             const revenue = bookingsData
                 .filter(b => b.showtime_id === st.id)
                 .reduce((sum, b) => sum + (b.amount || 0), 0);
+            
+            // Format Time Display
+            const timeStr = st.start_time.split(' ')[1];
+            const endTimeStr = st.end_time.split(' ')[1];
 
             return `
               <tr>
@@ -147,8 +179,8 @@ const AdminShowtimesPage = {
                   ${movieTitle}<br>
                   <small class="text-muted">${roomName}</small>
                 </td>
-                <td>${st.start_time}</td>
-                <td>${st.end_time}</td>
+                <td>${timeStr}</td>
+                <td>${endTimeStr}</td>
                 <td>${st.price ? st.price.toLocaleString() : '0'}</td>
                 <td class="fw-bold text-success">${revenue.toLocaleString()}</td>
                 <td class="text-end pe-4">
@@ -171,6 +203,11 @@ const AdminShowtimesPage = {
             btn.addEventListener('click', (e) => handleDelete(e.currentTarget.dataset.id));
         });
     };
+    
+    // Filter Event
+    dateFilter.addEventListener('change', () => {
+        renderList();
+    });
 
     const loadData = async () => {
         try {
@@ -181,6 +218,7 @@ const AdminShowtimesPage = {
                 getAllBookings()
             ]);
             moviesData = movies;
+            showtimesData = showtimes; // Store all data
             roomsData = rooms;
             bookingsData = bookings;
             
@@ -192,7 +230,7 @@ const AdminShowtimesPage = {
             roomSelect.innerHTML = '<option value="">-- Select room --</option>' + 
                 rooms.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
 
-            renderList(showtimes);
+            renderList(); // Initial Render
         } catch (err) {
             list.innerHTML = `<tr><td colspan="5" class="text-center text-danger py-4">Error loading data: ${err.message}</td></tr>`;
         }
@@ -204,7 +242,13 @@ const AdminShowtimesPage = {
             idInput.value = showtime.id;
             movieSelect.value = showtime.movie_id;
             roomSelect.value = showtime.room_id || '';
-            startInput.value = toLocalISO(showtime.start_time);
+            
+            // Split Start Time
+            // format: YYYY-MM-DD HH:MM
+            const parts = showtime.start_time.split(' ');
+            dateInput.value = parts[0];
+            timeInput.value = parts[1];
+
             priceInput.value = showtime.price;
             
             modalTitle.innerText = 'Edit Showtime';
@@ -216,6 +260,11 @@ const AdminShowtimesPage = {
         form.reset();
         idInput.value = '';
         modalTitle.innerText = 'Add Showtime';
+        
+        // Pre-fill Date from Filter
+        dateInput.value = dateFilter.value;
+        timeInput.value = '';
+        
         showtimeModal.show();
     });
 
@@ -232,7 +281,15 @@ const AdminShowtimesPage = {
             return;
         }
 
-        const startDate = new Date(startInput.value);
+        // Combine Date and Time
+        const startDateStr = `${dateInput.value}T${timeInput.value}`;
+        const startDate = new Date(startDateStr);
+        
+        if (isNaN(startDate.getTime())) {
+             alert("Invalid date/time");
+             return;
+        }
+
         const endDate = new Date(startDate.getTime() + selectedMovie.duration * 60000);
 
         const data = {

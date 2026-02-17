@@ -97,3 +97,8 @@
 - Various bug fixes and clean-up
 - Add '.db' to .gitignore
 - Update admin panel
+
+## 17/2/2026
+
+- Modify schedule selector to a paginated type in booking page and movie's detail
+- Fix seats visual bug, due to a logic fault which only show booked seats while skip rendering the rest

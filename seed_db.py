@@ -228,7 +228,7 @@ def seed_movies():
 # --- SEED BOOKINGS ---
 def seed_bookings(showtimes_info):
     # showtimes_info: list of (id, price, start_time)
-    print("Seeding Bookings (Large History)...")
+    print("Seeding Bookings (Full Seat Map)...")
     
     # 1. Get Users
     user_db_path = get_db_path('user', 'users.db')
@@ -282,63 +282,107 @@ def seed_bookings(showtimes_info):
         showtimes_info = [(r['id'], r['price'], r['start_time']) for r in rows]
         m_conn.close()
 
-    # 4. Generate ~2500 Bookings
-    count = 0
+    # 4. Generate Seats & Bookings for EACH Showtime
+    # We want to ensure EVERY showtime has a full seat map, not just random ones.
+    # And we want some of them to have bookings.
+    
+    total_bookings = 0
     today_str = datetime.date.today().strftime('%Y-%m-%d')
     
-    for _ in range(2500): 
-        if not showtimes_info: break
-        
-        sid, price, start_time = random.choice(showtimes_info)
-        email = random.choice(users)
-        
-        # Determine Status based on date
-        # If showtime is in past, it must be 'confirmed' (paid) to make sense for history
-        # If future, can be Pending or Confirmed
-        is_past = start_time < today_str
-        
-        if is_past:
-            status = 'confirmed'
-        else:
-            status = random.choice(['confirmed', 'confirmed', 'PENDING_PAYMENT'])
+    print(f"  - Generating seats for {len(showtimes_info)} showtimes...")
 
-        # Random Seat: Row A-I, Num 1-11
-        row = chr(random.randint(65, 73)) # A-I
-        num = random.randint(1, 11)
-        seat_num = f"{row}{num}"
+    for sid, price, start_time in showtimes_info:
+        # Determine if we should generate bookings for this showtime (e.g. 70% chance)
+        should_book = random.random() < 0.7
         
-        # Calculate Price
-        total_price = price
-        seat_type = 'STANDARD'
-        surcharge = 0
+        # Decide occupancy (0 to 20 seats)
+        occupancy = random.randint(1, 20) if should_book else 0
         
-        # VIP Logic
-        if row >= 'E' and row <= 'H' and 4 <= num <= 8:
-            seat_type = 'VIP'
-            surcharge = 20000
-            total_price += surcharge
+        # Track booked seats for this showtime to avoid double booking
+        booked_seats = set()
+        
+        # Pre-select random seats to be booked
+        if occupancy > 0:
+            # We need to pick from valid seats. 
+            # Total seats approx 9 * 11 = 99. 
+            # Let's generate the map first, then pick.
+            pass
+
+        # --- GENERATE FULL SEAT MAP ---
+        # Rows A-I (9 rows). 
+        # Rows A-H: 11 seats.
+        # Row I: 5 Couple Seats (1-2, 3-4, 5-6, 7-8, 9-10).
+        
+        seats_batch = [] # List of (seat_num, status, type, surcharge)
+        
+        # 1. Standard / VIP Rows (A-H -> 0-7)
+        for r in range(8):
+            row_letter = chr(65 + r)
+            for s in range(1, 12): # 1 to 11
+                seat_num = f"{row_letter}{s}"
+                
+                # Determine Type
+                s_type = 'STANDARD'
+                s_surcharge = 0
+                
+                # VIP Logic: Rows E-H (indices 4-7) AND Seats 4-8
+                if (4 <= r <= 7) and (4 <= s <= 8):
+                    s_type = 'VIP'
+                    s_surcharge = 20000
+                
+                seats_batch.append({
+                    "num": seat_num,
+                    "type": s_type,
+                    "surcharge": s_surcharge,
+                    "status": "available"
+                })
+
+        # 2. Couple Row (I -> 8)
+        # Seats 1-2, 3-4, 5-6, 7-8, 9-10
+        row_letter = 'I'
+        for s in range(1, 10, 2):
+            seat_num = f"{row_letter}{s}-{s+1}"
+            seats_batch.append({
+                "num": seat_num,
+                "type": "COUPLE",
+                "surcharge": 50000,
+                "status": "available"
+            })
             
-        # Check if seat taken in DB
-        exist = conn.execute('SELECT 1 FROM seats WHERE showtime_id=? AND seat_number=? AND status="booked"', 
-                             (sid, seat_num)).fetchone()
+        # --- ASSIGN BOOKINGS ---
+        if occupancy > 0:
+            # Randomly pick indices to book
+            indices_to_book = random.sample(range(len(seats_batch)), min(occupancy, len(seats_batch)))
+            for idx in indices_to_book:
+                seats_batch[idx]['status'] = 'booked'
         
-        if not exist:
-            # 1. Update Seat
+        # --- INSERT INTO DB ---
+        for seat in seats_batch:
+            # 1. Insert Seat
             conn.execute('''
-                INSERT OR REPLACE INTO seats (showtime_id, seat_number, status, seat_type, price_surcharge)
-                VALUES (?, ?, "booked", ?, ?)
-            ''', (sid, seat_num, seat_type, surcharge))
-            
-            # 2. Insert Booking
-            conn.execute('''
-                INSERT INTO bookings (showtime_id, seat_number, customer_email, amount, status)
+                INSERT OR IGNORE INTO seats (showtime_id, seat_number, status, seat_type, price_surcharge)
                 VALUES (?, ?, ?, ?, ?)
-            ''', (sid, seat_num, email, total_price, status))
-            count += 1
+            ''', (sid, seat['num'], seat['status'], seat['type'], seat['surcharge']))
+            
+            # 2. Create Booking if booked
+            if seat['status'] == 'booked':
+                email = random.choice(users)
+                
+                # Status logic
+                is_past = start_time < today_str
+                bk_status = 'confirmed' if is_past else random.choice(['confirmed', 'confirmed', 'PENDING_PAYMENT'])
+                
+                total_price = price + seat['surcharge']
+                
+                conn.execute('''
+                    INSERT INTO bookings (showtime_id, seat_number, customer_email, amount, status)
+                    VALUES (?, ?, ?, ?, ?)
+                ''', (sid, seat['num'], email, total_price, bk_status))
+                total_bookings += 1
 
     conn.commit()
     conn.close()
-    print(f"  - Created {count} bookings across {len(showtimes_info)} showtimes.")
+    print(f"  - Created {total_bookings} bookings across {len(showtimes_info)} showtimes.")
 
 
 if __name__ == "__main__":
