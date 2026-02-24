@@ -92,25 +92,37 @@ const MovieDetailsPage = {
                 
                 <p class="lead text-muted mb-5">${movie.description || 'No description available for this movie.'}</p>
                 
-                <h4 class="fw-bold mb-4">Showtimes</h4>
+                <h4 class="fw-bold mb-4">Showtimes Schedule</h4>
                 
                 <div id="schedule-container">
-                    <!-- Date Scroller -->
-                    <div class="mb-2">
-                        <label class="form-label small text-muted mb-0">Select Date</label>
-                    </div>
-                    <div class="d-flex align-items-stretch gap-2 mb-4">
-                        <button id="prev-dates-btn" class="btn btn-outline-secondary btn-sm px-2" title="Previous dates">
-                            <i class="bi bi-chevron-left"></i>
-                        </button>
-                        
-                        <div class="date-scroller flex-grow-1" id="date-scroller">
-                            <!-- Date items will be injected here -->
+                    <!-- Calendar View -->
+                    <div class="calendar-container mb-4">
+                        <div class="calendar-header">
+                            <button id="prev-month-btn" class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-chevron-left"></i> Previous
+                            </button>
+                            <h5 id="current-month-label" class="mb-0 fw-bold">Month Year</h5>
+                            <button id="next-month-btn" class="btn btn-outline-secondary btn-sm">
+                                Next <i class="bi bi-chevron-right"></i>
+                            </button>
                         </div>
+                        <div class="calendar-grid">
+                            <div class="calendar-day-label">Sun</div>
+                            <div class="calendar-day-label">Mon</div>
+                            <div class="calendar-day-label">Tue</div>
+                            <div class="calendar-day-label">Wed</div>
+                            <div class="calendar-day-label">Thu</div>
+                            <div class="calendar-day-label">Fri</div>
+                            <div class="calendar-day-label">Sat</div>
+                        </div>
+                        <div id="calendar-body" class="calendar-grid border-top">
+                            <!-- Days will be injected here -->
+                        </div>
+                    </div>
 
-                        <button id="next-dates-btn" class="btn btn-outline-secondary btn-sm px-2" title="Next dates">
-                            <i class="bi bi-chevron-right"></i>
-                        </button>
+                    <!-- Selected Day Info -->
+                    <div id="selected-day-header" class="mb-3 d-none">
+                        <h5 class="fw-bold">Showtimes for <span id="display-date">...</span></h5>
                     </div>
 
                     <!-- Times Grid -->
@@ -120,23 +132,36 @@ const MovieDetailsPage = {
             </div>
         `;
 
-        // --- Logic for Date Scroller & Grid ---
-        const scroller = document.getElementById('date-scroller');
-        const prevBtn = document.getElementById('prev-dates-btn');
-        const nextBtn = document.getElementById('next-dates-btn');
+        // --- Calendar Logic ---
+        const calendarBody = document.getElementById('calendar-body');
+        const monthLabel = document.getElementById('current-month-label');
+        const prevMonthBtn = document.getElementById('prev-month-btn');
+        const nextMonthBtn = document.getElementById('next-month-btn');
         const timesGrid = document.getElementById('showtimes-grid');
+        const selectedDayHeader = document.getElementById('selected-day-header');
+        const displayDateSpan = document.getElementById('display-date');
 
-        if (dates.length === 0) {
-            timesGrid.innerHTML = '<div class="alert alert-info">No showtimes available.</div>';
+        if (showtimes.length === 0) {
+            timesGrid.innerHTML = '<div class="alert alert-info">No showtimes available for this movie.</div>';
             return;
         }
 
-        let currentPage = 0;
-        const datesPerPage = 8;
-        const totalPages = Math.ceil(dates.length / datesPerPage);
+        // Initialize to current month or month of first showtime
+        let currentViewDate = new Date();
+        if (dates.length > 0) {
+            const firstShowDate = new Date(dates[0]);
+            // If first show is in the future, start there
+            if (firstShowDate > currentViewDate) {
+                currentViewDate = new Date(firstShowDate.getFullYear(), firstShowDate.getMonth(), 1);
+            }
+        }
 
         const renderTimes = (dateStr) => {
             const shows = groupedShowtimes[dateStr];
+            selectedDayHeader.classList.remove('d-none');
+            const d = new Date(dateStr);
+            displayDateSpan.textContent = d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
             if (!shows) {
                 timesGrid.innerHTML = '<div class="alert alert-warning">No shows found for this date.</div>';
                 return;
@@ -149,11 +174,11 @@ const MovieDetailsPage = {
                         const roomName = roomMap[st.room_id] || 'Room';
                         return `
                         <div class="col-6 col-sm-4 col-md-3 col-lg-2">
-                            <a href="/book/${st.id}" class="btn btn-outline-primary w-100 h-100 d-flex flex-column justify-content-center align-items-center p-2">
-                                <span class="fw-bold mb-1">${st.time}</span>
-                                <div class="small text-muted" style="font-size: 0.7rem;">
-                                    <div class="border-bottom pb-1 mb-1">${roomName}</div>
-                                    <div>${st.price.toLocaleString()} VND</div>
+                            <a href="/book/${st.id}" class="btn btn-outline-primary w-100 h-100 d-flex flex-column justify-content-center align-items-center p-3 shadow-sm">
+                                <span class="fw-bold mb-1 fs-5">${st.time}</span>
+                                <div class="small text-muted" style="font-size: 0.75rem;">
+                                    <div class="border-top pt-1 mt-1">${roomName}</div>
+                                    <div class="fw-bold text-dark">${st.price.toLocaleString()} VND</div>
                                 </div>
                             </a>
                         </div>
@@ -163,67 +188,99 @@ const MovieDetailsPage = {
             `;
         };
 
-        const renderDatePage = (activeDate) => {
-            const start = currentPage * datesPerPage;
-            const end = start + datesPerPage;
-            const pageDates = dates.slice(start, end);
+        const renderCalendar = (baseDate, activeDateStr = null) => {
+            const year = baseDate.getFullYear();
+            const month = baseDate.getMonth();
+            
+            monthLabel.textContent = baseDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
-            // Update Buttons
-            prevBtn.disabled = currentPage === 0;
-            nextBtn.disabled = currentPage >= totalPages - 1;
+            // Get first day of month and last day of month
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            
+            // Fill start of week with prev month days
+            const days = [];
+            const prevMonthLastDay = new Date(year, month, 0).getDate();
+            for (let i = firstDay.getDay(); i > 0; i--) {
+                days.push({ 
+                    day: prevMonthLastDay - i + 1, 
+                    currentMonth: false,
+                    dateStr: null // Don't allow selecting other month days for now
+                });
+            }
 
-            scroller.innerHTML = pageDates.map(dStr => {
-                const { day, date } = getDayLabel(dStr);
-                const isActive = dStr === activeDate ? 'active' : '';
+            // Current month days
+            for (let i = 1; i <= lastDay.getDate(); i++) {
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+                days.push({
+                    day: i,
+                    currentMonth: true,
+                    dateStr: dateStr,
+                    hasShows: !!groupedShowtimes[dateStr],
+                    showCount: groupedShowtimes[dateStr]?.length || 0
+                });
+            }
+
+            // Fill end of week
+            const remaining = 42 - days.length; // 6 rows of 7
+            for (let i = 1; i <= remaining; i++) {
+                days.push({
+                    day: i,
+                    currentMonth: false,
+                    dateStr: null
+                });
+            }
+
+            calendarBody.innerHTML = days.map(d => {
+                const isCurrentMonth = d.currentMonth ? '' : 'not-current-month';
+                const hasShows = d.hasShows ? 'has-shows' : '';
+                const isActive = d.dateStr === activeDateStr ? 'active' : '';
+                
                 return `
-                    <div class="date-scroller-item ${isActive}" data-date="${dStr}">
-                        <span class="date-scroller-day">${day}</span>
-                        <span class="date-scroller-date">${date}</span>
+                    <div class="calendar-day ${isCurrentMonth} ${isActive}" data-date="${d.dateStr || ''}">
+                        <span class="calendar-day-num">${d.day}</span>
+                        <div class="calendar-day-indicator">
+                            ${d.showCount > 0 ? `<span class="showtime-count">${d.showCount} shows</span>` : ''}
+                        </div>
                     </div>
                 `;
             }).join('');
 
             // Add Events
-            scroller.querySelectorAll('.date-scroller-item').forEach(el => {
+            calendarBody.querySelectorAll('.calendar-day').forEach(el => {
+                const ds = el.dataset.date;
+                if (!ds) return;
+                
                 el.addEventListener('click', () => {
-                    const newDate = el.dataset.date;
-                    renderDatePage(newDate); // Re-render to update active class
-                    renderTimes(newDate);
+                    // Remove active from all
+                    calendarBody.querySelectorAll('.calendar-day').forEach(d => d.classList.remove('active'));
+                    el.classList.add('active');
+                    renderTimes(ds);
                 });
             });
         };
 
-        // Navigation Events
-        prevBtn.addEventListener('click', () => {
-            if (currentPage > 0) {
-                currentPage--;
-                // Keep current selection active visualization if it's on the new page
-                // But for simplicity, we just re-render the page. 
-                // The currently selected date is not tracked globally in this scope 
-                // except by looking at the 'active' class, but that's DOM based.
-                // Let's assume we don't change the selection when paging unless clicked.
-                // We need to pass the currently active date to keep it highlighted.
-                const activeEl = scroller.querySelector('.active');
-                const currentActiveDate = activeEl ? activeEl.dataset.date : dates[0];
-                renderDatePage(currentActiveDate);
-            }
+        // Navigation
+        prevMonthBtn.addEventListener('click', () => {
+            currentViewDate.setMonth(currentViewDate.getMonth() - 1);
+            renderCalendar(currentViewDate);
         });
 
-        nextBtn.addEventListener('click', () => {
-            if (currentPage < totalPages - 1) {
-                currentPage++;
-                const activeEl = scroller.querySelector('.active');
-                const currentActiveDate = activeEl ? activeEl.dataset.date : dates[0];
-                renderDatePage(currentActiveDate);
-            }
+        nextMonthBtn.addEventListener('click', () => {
+            currentViewDate.setMonth(currentViewDate.getMonth() + 1);
+            renderCalendar(currentViewDate);
         });
 
         // Initial Render
-        // Default to first date
-        renderDatePage(dates[0]);
-        renderTimes(dates[0]);
+        // Find first available date to show
+        const firstAvailableDate = dates.length > 0 ? dates[0] : null;
+        renderCalendar(currentViewDate, firstAvailableDate);
+        if (firstAvailableDate) {
+            renderTimes(firstAvailableDate);
+        }
 
     } catch (err) {
+        console.error(err);
         container.innerHTML = `<div class="alert alert-danger">Error: ${err.message}</div>`;
     }
   }
