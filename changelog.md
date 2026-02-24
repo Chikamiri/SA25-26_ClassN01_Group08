@@ -121,3 +121,10 @@
 
 - Modify schedule selector to a paginated type in booking page and movie's detail
 - Fix seats visual bug, due to a logic fault which only show booked seats while skip rendering the rest
+
+## 24/2/2026
+
+- Replace the paginated date scroller with a comprehensive 1-month calendar grid in `MovieDetailsPage`.
+- Implement a 7-column layout for the calendar view with month navigation.
+- Add showtime count indicators on calendar days to highlight available dates.
+- Enhanced calendar styling with responsive design for improved mobile user experience.

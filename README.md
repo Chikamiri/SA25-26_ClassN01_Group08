@@ -50,8 +50,12 @@ The system is split into the following microservices:
 
 | Service | Port | Description |
 |---------|------|-------------|
-| **Movie Service** | `5001` | Manages movie details (Title, Genre, Duration, etc.) |
-| **Booking Service** | `5002` | Handles ticket bookings and reservations |
+| **API Gateway** | `5000` | Entry point for all client requests; handles routing and authentication. |
+| **Movie Service** | `5001` | Manages movie details, rooms, and showtime schedules. |
+| **Booking Service** | `5002` | Handles ticket reservations and real-time seat status. |
+| **Payment Service** | `5003` | Processes payments and manages user payment methods. |
+| **User Service** | `5004` | Manages user accounts, authentication (JWT), and profiles. |
+| **Notification Service** | - | Consumer service for email/log alerts via RabbitMQ. |
 
 ---
 
