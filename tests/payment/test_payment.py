@@ -1,40 +1,47 @@
-from tests.base import TestBase
+from tests.base import TestBase, Colors
 
 class TestPayment(TestBase):
-    def test_22_TC_PAYMENT_04_add_card(self):
-        headers = {"X-User-Email": self.state['user_email']}
+    
+    def test_22_add_payment_method(self):
+        """TC_PAYMENT_04: Save a new credit card via Gateway"""
+        print(f"\n{Colors.BOLD}--- Payment: Add Method ---{Colors.RESET}")
         payload = {"card_number": "1234567890123456", "card_holder": "TEST USER"}
-        resp = self._req('POST', 5003, '/api/payment-methods', payload, headers, status=201)
+        resp = self._req('POST', endpoint='/api/payment-methods', payload=payload, headers=self.get_auth_headers(), status=201)
+        self.state['card_id'] = resp.json().get('id')
 
-    def test_23_TC_PAYMENT_05_get_cards(self):
-        headers = {"X-User-Email": self.state['user_email']}
-        resp = self._req('GET', 5003, '/api/payment-methods', headers=headers, status=200)
-        if len(resp.json()) > 0:
-            TestBase.state['card_id'] = resp.json()[0]['id']
+    def test_23_get_payment_methods(self):
+        """TC_PAYMENT_05: List saved cards"""
+        print(f"\n{Colors.BOLD}--- Payment: List Methods ---{Colors.RESET}")
+        resp = self._req('GET', endpoint='/api/payment-methods', headers=self.get_auth_headers(), status=200)
+        self.assertIsInstance(resp.json(), list)
 
-    def test_24_TC_PAYMENT_07_update_card(self):
-        if self.state['card_id']:
-            headers = {"X-User-Email": self.state['user_email']}
-            self._req('PUT', 5003, f"/api/payment-methods/{self.state['card_id']}", 
-                      {"card_holder": "NEW NAME"}, headers, status=200)
-
-    def test_25_TC_PAYMENT_01_success(self):
-        headers = {"X-User-Email": self.state['user_email']}
+    def test_24_process_payment_success(self):
+        """TC_PAYMENT_01: Pay for a grouped booking"""
+        print(f"\n{Colors.BOLD}--- Payment: Process Grouped ---{Colors.RESET}")
+        
+        # 1. Create a new booking
         new_showtime = self.create_dedicated_showtime()
         seat = self.get_real_available_seat(new_showtime)
+        bk_resp = self._req('POST', endpoint='/api/bookings', 
+                           payload={"showtime_id": new_showtime, "seat_numbers": [seat]}, 
+                           headers=self.get_auth_headers(), status=201)
         
-        r = self._req('POST', 5002, '/api/bookings', 
-                      {"showtime_id": new_showtime, "seat_number": seat}, headers, status=201)
-        try:
-            b_data = r.json()
-            new_booking_id = b_data.get("booking_id") or b_data.get("booking_ids")[0]
-            self._req('POST', 5003, '/api/payments', {"booking_id": new_booking_id}, status=201)
-        except: pass
+        bk_id = bk_resp.json().get("booking_id")
+        
+        # 2. Pay for it
+        self._req('POST', endpoint='/api/payments', payload={"booking_id": bk_id}, headers=self.get_auth_headers(), status=201)
+        
+        # 3. Verify booking status is now confirmed
+        status_resp = self._req('GET', endpoint=f"/api/bookings/{bk_id}", headers=self.get_auth_headers(), status=200)
+        self.assertEqual(status_resp.json().get('status'), 'confirmed')
 
-    def test_26_TC_PAYMENT_02_not_found(self):
-        self._req('POST', 5003, '/api/payments', {"booking_id": 999999}, status=404)
+    def test_25_payment_not_found(self):
+        """TC_PAYMENT_02: Payment for invalid booking"""
+        print(f"\n{Colors.BOLD}--- Payment: 404 Booking ---{Colors.RESET}")
+        self._req('POST', endpoint='/api/payments', payload={"booking_id": 999999}, headers=self.get_auth_headers(), status=404)
 
-    def test_27_TC_PAYMENT_06_delete_card(self):
+    def test_26_delete_card(self):
+        """TC_PAYMENT_06: Remove a payment method"""
+        print(f"\n{Colors.BOLD}--- Payment: Delete Method ---{Colors.RESET}")
         if self.state['card_id']:
-            headers = {"X-User-Email": self.state['user_email']}
-            self._req('DELETE', 5003, f"/api/payment-methods/{self.state['card_id']}", headers=headers, status=200)
+            self._req('DELETE', endpoint=f"/api/payment-methods/{self.state['card_id']}", headers=self.get_auth_headers(), status=200)

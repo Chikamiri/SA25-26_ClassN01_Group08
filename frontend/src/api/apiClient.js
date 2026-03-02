@@ -69,7 +69,7 @@ export async function request(endpoint, options = {}) {
 
 // Helper function for login
 export async function loginUser(credentials) {
-  // credentials: { email, password }
+  // credentials: { username (or email), password }
   return request('auth/login', {
     method: 'POST',
     body: JSON.stringify(credentials),

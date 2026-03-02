@@ -14,7 +14,7 @@ const AdminLoginPage = {
               <form id="admin-login-form">
                 <div class="mb-3">
                   <label class="form-label">Username / Email</label>
-                  <input type="text" id="admin-email" class="form-control" placeholder="admin" required>
+                  <input type="text" id="admin-email" class="form-control" placeholder="admin or admin@system.com" required>
                 </div>
                 <div class="mb-4">
                   <label class="form-label">Password</label>
@@ -41,7 +41,7 @@ const AdminLoginPage = {
     const form = document.getElementById('admin-login-form');
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const email = document.getElementById('admin-email').value;
+      const username = document.getElementById('admin-email').value;
       const password = document.getElementById('admin-password').value;
       const errorMsg = document.getElementById('admin-error-msg');
       const loginBtn = document.getElementById('admin-login-btn');
@@ -51,7 +51,7 @@ const AdminLoginPage = {
       errorMsg.innerText = '';
 
       try {
-        const response = await loginUser({ username: email, password });
+        const response = await loginUser({ username, password });
         
         if (response.role === 'admin') {
             localStorage.setItem('user', JSON.stringify(response));

@@ -26,6 +26,10 @@ def clean_databases():
 def wait_for_services(timeout=30):
     start = time.time()
     for name, config in SERVICES_CONFIG.items():
+        if 'port' not in config:
+            continue # Skip services without port (e.g. notification)
+            
+        print(f" -> Waiting for {name} on port {config['port']}...")
         while True:
             try:
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -48,7 +52,7 @@ def run_suite():
     clean_databases()
     
     # 2. Khởi động Services
-    print(f"\n{Colors.BOLD}{Colors.HEADER}>>> STARTING SERVICES <<<{Colors.RESET}")
+    print(f"\n{Colors.BOLD}{Colors.HEADER}>>> STARTING ALL MICROSERVICES <<<{Colors.RESET}")
     processes = []
     log_files = []
     env = os.environ.copy()
@@ -68,23 +72,32 @@ def run_suite():
         processes.append(p)
 
     # 3. Chờ Services
-    print(f" -> {Colors.YELLOW}Waiting 12s for services...{Colors.RESET}")
-    time.sleep(12)
-    if not wait_for_services():
+    print(f" -> {Colors.YELLOW}Waiting for services to be healthy...{Colors.RESET}")
+    if not wait_for_services(timeout=45):
+        print(f"{Colors.RED}System failed to start. Terminating.{Colors.RESET}")
         for p in processes: p.terminate()
         sys.exit(1)
     
-    print(f"{Colors.GREEN}[READY] Services are running.{Colors.RESET}\n")
+    print(f"{Colors.GREEN}[READY] All services are listening.{Colors.RESET}\n")
 
-    # 4. Chạy Test (Theo thứ tự mong muốn)
+    # 4. Chạy Test (Theo thứ tự logic)
     loader = unittest.TestLoader()
     suite = unittest.TestSuite()
     
-    # Load lần lượt để đảm bảo thứ tự User -> Movie -> Booking -> Payment
+    # Phase 1 & 5: Security & Gateway
+    if os.path.exists('tests/gateway/test_gateway.py'):
+        suite.addTests(loader.loadTestsFromName('tests.gateway.test_gateway'))
+    
+    # Notification integration
+    if os.path.exists('tests/notification/test_notification.py'):
+        suite.addTests(loader.loadTestsFromName('tests.notification.test_notification'))
+    
+    # Core Services (Going through Gateway)
     suite.addTests(loader.loadTestsFromName('tests.user.test_user'))
     suite.addTests(loader.loadTestsFromName('tests.movie.test_movie'))
     suite.addTests(loader.loadTestsFromName('tests.booking.test_booking'))
     suite.addTests(loader.loadTestsFromName('tests.payment.test_payment'))
+    suite.addTests(loader.loadTestsFromName('tests.test_errors'))
 
     runner = unittest.TextTestRunner(verbosity=2, failfast=False)
     result = runner.run(suite)

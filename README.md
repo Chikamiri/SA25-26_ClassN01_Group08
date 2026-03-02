@@ -15,8 +15,6 @@ The fastest way to run the entire system (Frontend, Backend, and Database) is us
 2. **Open the App**:
    Go to **[http://localhost:5173](http://localhost:5173)**
 
-*The database is automatically seeded with movies, posters, and an account:*
-
 ---
 
 ## 🏗 Architecture & Services
@@ -30,6 +28,79 @@ The fastest way to run the entire system (Frontend, Backend, and Database) is us
 | **User Service** | `5004` | Manages user accounts, authentication, and profiles. |
 | **Notification Service** | - | Consumer service for email alerts via RabbitMQ. |
 | **Frontend** | `5173` | React (Vite) Single Page Application. |
+
+---
+
+## 📂 Database & Seed Management
+
+Use these commands to manage your local data state.
+
+### Using Docker (Recommended)
+
+```bash
+# To Seed (Reset + Add Fresh Data)
+docker compose run --rm db_seeder
+
+# To Reset (Clear all data)
+docker compose run --rm gateway python reset_db.py
+```
+
+### Manual Setup (Local Python)
+
+```bash
+# To Seed
+python seed_db.py
+
+# To Reset
+python reset_db.py
+```
+
+---
+
+## 🧪 Running Tests
+
+We use a comprehensive integration test suite that verifies the entire system flow through the API Gateway.
+
+### Via Docker
+
+```bash
+# Run all API tests
+docker compose run --rm gateway python tests/test_api.py
+```
+
+### Locally
+
+Ensure all backend services are running (`python src/run_app.py`), then:
+
+```bash
+# Windows
+$env:PYTHONPATH = "src"; python tests/test_api.py
+
+# Linux / MacOS
+export PYTHONPATH=src && python tests/test_api.py
+```
+
+---
+
+## 💻 Manual Setup (Local Development)
+
+If you prefer to run services manually (**RabbitMQ required**):
+
+### 1. Backend
+
+```bash
+pip install -r requirements.txt
+python seed_db.py
+python src/run_app.py
+```
+
+### 2. Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
 ---
 
@@ -64,32 +135,3 @@ The system supports booking **multiple seats in a single transaction**. A single
   "message": "Booking successful"
 }
 ```
-
----
-
-## 💻 Manual Setup (Local Development)
-
-If you prefer to run services manually (**RabbitMQ required**):
-
-### 1. Backend
-
-```bash
-pip install -r requirements.txt
-python seed_db.py
-python src/run_app.py
-```
-
-### 2. Frontend
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
----
-
-## 📂 Database Management
-
-- **`seed_db.py`**: Resets and populates all databases with fresh test data.
-- **`reset_db.py`**: Clears all tables without adding new data.

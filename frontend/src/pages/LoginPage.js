@@ -10,8 +10,8 @@ const LoginPage = {
               <h2 class="text-center fw-bold mb-4">Login</h2>
               <form id="login-form">
                 <div class="mb-3">
-                  <label class="form-label">Email</label>
-                  <input type="email" id="email" class="form-control" placeholder="user@example.com" required>
+                  <label class="form-label">Email or Username</label>
+                  <input type="text" id="username" class="form-control" placeholder="user@example.com or username" required>
                 </div>
                 <div class="mb-4">
                   <label class="form-label">Password</label>
@@ -38,7 +38,7 @@ const LoginPage = {
     const form = document.getElementById('login-form');
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const email = document.getElementById('email').value;
+      const username = document.getElementById('username').value;
       const password = document.getElementById('password').value;
       const errorMsg = document.getElementById('error-msg');
       const loginBtn = document.getElementById('login-btn');
@@ -48,7 +48,7 @@ const LoginPage = {
       errorMsg.innerText = '';
 
       try {
-        const response = await loginUser({ username: email, password });
+        const response = await loginUser({ username, password });
         localStorage.setItem('user', JSON.stringify(response));
         window.location.href = '/'; 
       } catch (err) {

@@ -61,6 +61,12 @@ class MovieRepository:
         if 'room_id' not in columns:
             cursor.execute("ALTER TABLE showtimes ADD COLUMN room_id INTEGER")
         
+        # Seed a default room if none exist
+        cursor.execute('SELECT COUNT(*) FROM rooms')
+        if cursor.fetchone()[0] == 0:
+            cursor.execute('INSERT INTO rooms (name, rows, seats_per_row) VALUES (?, ?, ?)', 
+                           ("Standard Hall 1", 9, 11))
+        
         conn.commit()
         conn.close()
 

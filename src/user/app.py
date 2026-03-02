@@ -45,6 +45,14 @@ def init_db():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
+    
+    # Seed default admin if not exists
+    cursor.execute('SELECT COUNT(*) FROM users WHERE email = ?', ('admin@system.com',))
+    if cursor.fetchone()[0] == 0:
+        hashed_admin_pass = generate_password_hash('111111')
+        conn.execute('INSERT INTO users (email, password, role) VALUES (?, ?, ?)', 
+                     ('admin@system.com', hashed_admin_pass, 'admin'))
+    
     conn.commit()
     conn.close()
 
@@ -74,8 +82,12 @@ def register():
 @app.route('/api/auth/login', methods=['POST'])
 def login():
     data = request.json
-    username = data.get('username')
+    # Chấp nhận cả email hoặc username để tăng tính tương thích
+    username = data.get('username') or data.get('email')
     password = data.get('password')
+
+    if not username or not password:
+        return jsonify({"error": "Email/Username and password required"}), 400
 
     conn = get_db_connection()
     # Kiểm tra email hoặc nếu username là 'admin' thì ánh xạ tới admin@system.com
