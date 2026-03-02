@@ -9,7 +9,7 @@ services = [
     {"name": "Booking Service",      "cmd": ["python", "booking/app.py"],      "port": 5002},
     {"name": "Payment Service",      "cmd": ["python", "payment/app.py"],      "port": 5003},
     {"name": "Notification Service", "cmd": ["python", "notification/app.py"], "port": "N/A"},
-    {"name": "API Gateway",          "cmd": ["python", "gateway/app.py"],      "port": 5000},
+    {"name": "API Gateway",          "cmd": ["python", "gateway/app.py"],      "port": 5005},
 ]
 
 processes = []
@@ -30,9 +30,9 @@ def start_services():
         time.sleep(1) 
 
     print("---------------------------------------")
-    print("System is ready!")
-    print("Please access: http://127.0.0.1:5000")
-    print("Press Ctrl + C to stop all.")
+    print("System ready!")
+    print("Access: http://127.0.0.1:5005")
+    print("Ctrl + C to stop all.")
 
 def stop_services():
     print("\n\nStopping the system...")

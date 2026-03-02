@@ -6,7 +6,7 @@ from flask_cors import CORS
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from movie.business_logic.movie_service import MovieService
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='resource/static', static_url_path='/static')
 CORS(app)
 movie_service = MovieService()
 
@@ -16,9 +16,9 @@ def get_movies():
     query = request.args.get('query')
     
     if query:
-        return jsonify(movie_service.search_movies(query))
+        return jsonify(movie_service.search_movies(query)), 200
     else:
-        return jsonify(movie_service.get_all_movies())
+        return jsonify(movie_service.get_all_movies()), 200
 
 @app.route('/api/movies/<movie_id>', methods=['GET'])
 def get_movie_detail(movie_id):
@@ -36,7 +36,8 @@ def create_movie():
             data['title'], 
             data['genre'], 
             data['duration'], 
-            data['release_date']
+            data['release_date'],
+            data.get('image_url')
         )
         return jsonify(res), 201
     except Exception as e: return jsonify({"error": str(e)}), 400
@@ -50,7 +51,8 @@ def update_movie(movie_id):
             data['title'], 
             data['genre'], 
             data['duration'], 
-            data['release_date']
+            data['release_date'],
+            data.get('image_url')
         )
         return jsonify(res), 200
     except Exception as e: return jsonify({"error": str(e)}), 400
@@ -62,6 +64,28 @@ def delete_movie(movie_id):
         return jsonify(res), 200
     except Exception as e: return jsonify({"error": str(e)}), 400
 
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@app.route('/api/movies/upload', methods=['POST'])
+def upload_file():
+    if 'file' not in request.files:
+        return jsonify({"error": "No file part"}), 400
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({"error": "No selected file"}), 400
+    
+    if file and allowed_file(file.filename):
+        filename = file.filename
+        # Save to static folder
+        filepath = os.path.join(app.static_folder, filename)
+        file.save(filepath)
+        return jsonify({"filename": filename}), 200
+    
+    return jsonify({"error": "File type not allowed. Please upload an image (png, jpg, jpeg, gif, webp)."}), 400
 
 @app.route('/api/rooms', methods=['GET'])
 def get_rooms():

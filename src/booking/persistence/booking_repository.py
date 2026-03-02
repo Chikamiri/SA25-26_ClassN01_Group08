@@ -141,25 +141,31 @@ class BookingRepository:
         conn.commit()
         conn.close()
 
-    def create_booking(self, showtime_id, seat_number, email, amount):
+    def create_booking(self, showtime_id, seat_numbers, email, amount):
+        if not isinstance(seat_numbers, list):
+            seat_numbers = [seat_numbers]
+            
         conn = self._get_connection()
         cursor = conn.cursor()
         
         try:
-            # Atomic update: only change to 'booked' if it is currently 'available'
-            cursor.execute('''
-                UPDATE seats 
-                SET status = "booked" 
-                WHERE showtime_id = ? AND seat_number = ? AND status = "available"
-            ''', (showtime_id, seat_number))
+            # 1. Atomic update for ALL seats
+            for seat_number in seat_numbers:
+                cursor.execute('''
+                    UPDATE seats 
+                    SET status = "booked" 
+                    WHERE showtime_id = ? AND seat_number = ? AND status = "available"
+                ''', (showtime_id, seat_number))
+                
+                if cursor.rowcount == 0:
+                    raise ValueError(f"Seat {seat_number} is no longer available.")
             
-            if cursor.rowcount == 0:
-                conn.close()
-                raise ValueError(f"Seat {seat_number} is no longer available.")
+            # 2. Store seat_numbers as comma separated string for simplicity in current schema
+            seats_str = ",".join(seat_numbers)
             
             cursor.execute(
                 'INSERT INTO bookings (showtime_id, seat_number, customer_email, amount, status) VALUES (?, ?, ?, ?, ?)',
-                (showtime_id, seat_number, email, amount, 'PENDING_PAYMENT')
+                (showtime_id, seats_str, email, amount, 'PENDING_PAYMENT')
             )
             booking_id = cursor.lastrowid
             conn.commit()
@@ -190,7 +196,13 @@ class BookingRepository:
             conn.close()
             raise ValueError("Booking not found")
         
-        conn.execute('UPDATE seats SET status = "available" WHERE showtime_id = ? AND seat_number = ?', (bk['showtime_id'], bk['seat_number']))
+        # Split seats_str back into list
+        seats_str = bk['seat_number']
+        seat_list = [s.strip() for s in seats_str.split(",") if s.strip()]
+        
+        for seat_num in seat_list:
+            conn.execute('UPDATE seats SET status = "available" WHERE showtime_id = ? AND seat_number = ?', (bk['showtime_id'], seat_num))
+        
         conn.execute('DELETE FROM bookings WHERE id = ?', (booking_id,))
         conn.commit()
         conn.close()

@@ -24,6 +24,10 @@ API_KEY_NAME = os.getenv('API_KEY_NAME', 'peko-key')
 def check_api_key():
     if request.method == 'OPTIONS':
         return
+    # Publicly allow movie posters (browsers won't send the API key header for <img> tags)
+    if request.path.startswith('/api/movies/posters/'):
+        return
+        
     client_key = request.headers.get(API_KEY_NAME)
     if client_key != VALID_API_KEY:
         return jsonify({"error": f"Missing or Invalid Header: {API_KEY_NAME}"}), 401
@@ -100,6 +104,62 @@ def movies_list():
         return validate_and_forward(MOVIE_SERVICE_URL, request.path, 'admin')
     return public_forward(MOVIE_SERVICE_URL, request.path)
 
+@app.route('/api/movies/posters/<path:filename>')
+def movie_posters(filename):
+    url = f"{MOVIE_SERVICE_URL}/static/{filename}"
+    resp = requests.get(
+        url,
+        headers={k: v for k, v in request.headers if k.lower() not in ['host', 'content-type']},
+        stream=True
+    )
+    
+    excluded_headers = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']
+    headers = [(name, value) for (name, value) in resp.headers.items()
+               if name.lower() not in excluded_headers]
+
+    return Response(resp.iter_content(chunk_size=1024), resp.status_code, headers)
+
+@app.route('/api/movies/upload', methods=['POST'])
+def movie_upload():
+    # Check admin token first
+    auth_header = request.headers.get('Authorization')
+    if not auth_header:
+        return jsonify({"error": "Missing Authorization Token"}), 401
+
+    token_parts = auth_header.split(" ")
+    if len(token_parts) != 2 or token_parts[0] != "Bearer":
+        return jsonify({"error": "Invalid Token Format"}), 401
+
+    token = token_parts[1]
+    verify_resp = requests.get(f"{USER_SERVICE_URL}/api/auth/verify", params={'token': token})
+    if verify_resp.status_code != 200:
+        return jsonify({"error": "Invalid or Expired Token"}), 401
+
+    user_info = verify_resp.json()
+    if user_info['role'] != 'admin':
+        return jsonify({"error": "Forbidden"}), 403
+
+    # Forward the file
+    url = f"{MOVIE_SERVICE_URL}/api/movies/upload"
+    
+    # Extract files for requests library
+    files = {}
+    for key, file in request.files.items():
+        files[key] = (file.filename, file.stream, file.content_type)
+
+    # Forward headers, excluding Host and Content-Type (requests will set it)
+    forward_headers = {k: v for k, v in request.headers.items() if k.lower() not in ['host', 'content-type']}
+    forward_headers['X-User-Email'] = user_info['email']
+    forward_headers['X-User-Role'] = user_info['role']
+    
+    resp = requests.post(
+        url,
+        headers=forward_headers,
+        files=files,
+        params=request.args
+    )
+    return Response(resp.content, resp.status_code, dict(resp.headers))
+
 @app.route('/api/movies/<path:path>', methods=['GET','PUT','DELETE'])
 def movie_detail(path):
     if request.method in ['PUT','DELETE']:
@@ -152,5 +212,5 @@ def payment_methods_detail(path):
 
 # ---------- RUN ----------
 if __name__ == '__main__':
-    print("API Gateway running on port 5000...")
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    print("API Gateway running on port 5005...")
+    app.run(host='0.0.0.0', port=5005, debug=True)

@@ -1,4 +1,4 @@
-import { getMovies } from '../api/apiClient.js';
+import { getMovies, API_GATEWAY_URL } from '../api/apiClient.js';
 
 const MoviesPage = {
   render: async () => {
@@ -39,17 +39,25 @@ const MoviesPage = {
         }
 
         moviesList.innerHTML = movies.map(movie => `
-          <div class="col-md-4 col-sm-6">
-            <div class="card h-100 shadow-sm border-0">
+          <div class="col-md-3 col-sm-6">
+            <div class="card h-100 shadow-sm border-0 overflow-hidden">
+              <a href="/movies/${movie.id}">
+                ${movie.image_url ? `
+                  <img src="${API_GATEWAY_URL}/movies/posters/${movie.image_url}" 
+                       class="card-img-top movie-poster" 
+                       alt="${movie.title}"
+                       onerror="this.parentElement.innerHTML='<div class=\\'movie-poster d-flex align-items-center justify-content-center bg-dark text-white\\'><h1 class=\\'display-1\\'>🎬</h1></div>'">
+                ` : `
+                  <div class="movie-poster d-flex align-items-center justify-content-center bg-dark text-white">
+                    <h1 class="display-1">🎬</h1>
+                  </div>
+                `}
+              </a>
               <div class="card-body">
-                <h5 class="card-title fw-bold">${movie.title}</h5>
-                <h6 class="card-subtitle mb-2 text-muted small">${movie.genre}</h6>
-                <p class="card-text small text-secondary">
-                  <strong>Duration:</strong> ${movie.duration} minutes<br>
-                  <strong>Release Date:</strong> ${new Date(movie.release_date).toLocaleDateString()}
-                </p>
-                <div class="d-grid mt-3">
-                  <a href="/movies/${movie.id}" class="btn btn-outline-primary btn-sm">View Details</a>
+                <h6 class="fw-bold mb-1 text-truncate">${movie.title}</h6>
+                <p class="text-muted small mb-2">${movie.genre} • ${movie.duration}m</p>
+                <div class="d-grid">
+                  <a href="/movies/${movie.id}" class="btn btn-outline-primary btn-sm">Details</a>
                 </div>
               </div>
             </div>

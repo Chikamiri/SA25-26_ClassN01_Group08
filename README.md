@@ -1,157 +1,95 @@
 # Movie Ticket Booking System
 
-This project is a Microservices-based Movie Ticket Booking System, currently transitioning from a Monolithic architecture. It consists of separate services for Movie Management and Ticket Booking.
+A Microservices-based Movie Ticket Booking System featuring automated seat management, grouped bookings, and a dedicated Admin Dashboard.
 
-## 🛠 Prerequisites
+## 🚀 Quick Start
 
-- Python 3.x
-- `pip` (Python package manager)
+The fastest way to run the entire system (Frontend, Backend, and Database) is using Docker:
 
-## 🚀 Setup Guide
+1. **Start everything**:
 
-### 1. Create a Virtual Environment
+   ```bash
+   docker compose up --build
+   ```
 
-Open your terminal in the project root directory and run:
+2. **Open the App**:
+   Go to **[http://localhost:5173](http://localhost:5173)**
 
-```bash
-# Linux / MacOS
-python3 -m venv venv
-
-# Windows
-python -m venv venv
-```
-
-### 2. Activate the Virtual Environment
-
-```bash
-# Linux / MacOS
-source venv/bin/activate
-# fish shell
-source venv/bin/activate.fish
-
-# Windows (Command Prompt)
-virtualenv\Scripts\activate.bat
-
-# Windows (PowerShell)
-virtualenv\Scripts\Activate.ps1
-```
-
-### 3. Install Dependencies
-
-```bash
-pip install -r requirements.txt
-```
+*The database is automatically seeded with movies, posters, and an account:*
 
 ---
 
 ## 🏗 Architecture & Services
 
-The system is split into the following microservices:
-
 | Service | Port | Description |
 |---------|------|-------------|
-| **API Gateway** | `5000` | Entry point for all client requests; handles routing and authentication. |
+| **API Gateway** | `5005` | Entry point; handles routing, security (API Keys), and Auth. |
 | **Movie Service** | `5001` | Manages movie details, rooms, and showtime schedules. |
-| **Booking Service** | `5002` | Handles ticket reservations and real-time seat status. |
+| **Booking Service** | `5002` | Handles grouped ticket reservations and real-time seat status. |
 | **Payment Service** | `5003` | Processes payments and manages user payment methods. |
-| **User Service** | `5004` | Manages user accounts, authentication (JWT), and profiles. |
-| **Notification Service** | - | Consumer service for email/log alerts via RabbitMQ. |
+| **User Service** | `5004` | Manages user accounts, authentication, and profiles. |
+| **Notification Service** | - | Consumer service for email alerts via RabbitMQ. |
+| **Frontend** | `5173` | React (Vite) Single Page Application. |
 
 ---
 
-## 🧪 Testing
+## 🧪 API Usage & Grouped Bookings
 
-### 1. Automated Integration Tests
+### Security Headers
 
-We have a built-in test script that sets up the environment, starts all services, runs a sequence of API tests, and verifies the responses. Service logs are automatically redirected to the `/logs` directory for easier debugging.
+All requests to the API Gateway must include:
 
-#### A. Running via Docker (Recommended)
+- `peko-key`: `BO_CHIKA`
 
-This is the most reliable method as it handles RabbitMQ and service networking automatically.
+### Grouped Bookings
 
-```bash
-docker compose run --rm movie_service python tests/test_api.py
+The system supports booking **multiple seats in a single transaction**. A single Booking ID represents the entire group.
+
+**Example Request (POST /api/bookings):**
+
+```json
+{
+  "showtime_id": 1,
+  "seat_numbers": ["A1", "A2", "A3"]
+}
 ```
 
-#### B. Running Locally
+**Response Example:**
 
-Ensure you have RabbitMQ running locally if you want to test notification features.
-
-```bash
-# Windows (PowerShell)
-$env:PYTHONPATH = "src"; venv\Scripts\python.exe tests/test_api.py
-
-# Linux / MacOS
-export PYTHONPATH=src && venv/bin/python tests/test_api.py
+```json
+{
+  "booking_id": 842,
+  "seats": "A1, A2, A3",
+  "total_price": 150000,
+  "message": "Booking successful"
+}
 ```
 
-*Logs will be generated in the `logs/` folder. You can check `{service}_err.log` if a service fails to start or responds with an error.*
+---
 
-### 2. Manual Testing
+## 💻 Manual Setup (Local Development)
 
-You can also run the services manually and test them using `curl` or Postman.
+If you prefer to run services manually (**RabbitMQ required**):
 
-#### Step 1: Start the Services
-
-You need to open **two separate terminal windows** (one for each service). Don't forget to activate `venv` in both.
-
-**Terminal 1 (Movie Service):**
+### 1. Backend
 
 ```bash
-# Linux / MacOS
-export PYTHONPATH=$(pwd)/src && python src/movie/app.py
-
-# Windows (PowerShell)
-$env:PYTHONPATH = "$(Get-Location)\src"; python src/movie/app.py
+pip install -r requirements.txt
+python seed_db.py
+python src/run_app.py
 ```
 
-**Terminal 2 (Booking Service):**
+### 2. Frontend
 
 ```bash
-# Linux / MacOS
-export PYTHONPATH=$(pwd)/src && python src/booking/app.py
-
-# Windows (PowerShell)
-$env:PYTHONPATH = "$(Get-Location)\src"; python src/booking/app.py
+cd frontend
+npm install
+npm run dev
 ```
 
-#### Step 2: Send Requests
+---
 
-**Create a Movie (Movie Service - Port 5001):**
+## 📂 Database Management
 
-```bash
-curl -X POST http://127.0.0.1:5001/api/movies \
-     -H "Content-Type: application/json" \
-     -d '{
-           "title": "Inception",
-           "genre": "Sci-Fi",
-           "duration": 148,
-           "release_date": "2010-07-16"
-         }'
-```
-
-**Get All Movies:**
-
-```bash
-curl http://127.0.0.1:5001/api/movies
-```
-
-**Create a Booking (Booking Service - Port 5002):**
-
-```bash
-curl -X POST http://127.0.0.1:5002/api/bookings \
-     -H "Content-Type: application/json" \
-     -d '{
-           "user_name": "Alice",
-           "showtime_id": "101",
-           "seat_number": "A1",
-           "price": 12.50
-         }'
-```
-
-**Get Booking Details:**
-
-```bash
-# Replace <booking_id> with the ID returned from the previous step (e.g., 1)
-curl http://127.0.0.1:5002/api/bookings/1
-```
+- **`seed_db.py`**: Resets and populates all databases with fresh test data.
+- **`reset_db.py`**: Clears all tables without adding new data.

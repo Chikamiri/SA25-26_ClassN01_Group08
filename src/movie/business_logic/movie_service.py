@@ -88,10 +88,10 @@ class MovieService:
             print(f"Error processing refund: {e}")
             return 0
 
-    def add_movie(self, id, title, genre, duration, release_date):
+    def add_movie(self, id, title, genre, duration, release_date, image_url=None):
         if id and self.movie_repo.get_movie(id):
             raise ValueError(f"Movie ID {id} already exists")
-        new_id = self.movie_repo.add_movie(id, title, genre, duration, release_date)
+        new_id = self.movie_repo.add_movie(id, title, genre, duration, release_date, image_url)
         return {"message": "Movie created", "id": new_id}
 
     def get_all_movies(self):
@@ -106,10 +106,10 @@ class MovieService:
         movie = self.movie_repo.get_movie(movie_id)
         return movie.to_dict() if movie else None
 
-    def update_movie(self, movie_id, title, genre, duration, release_date):
+    def update_movie(self, movie_id, title, genre, duration, release_date, image_url=None):
         if not self.movie_repo.get_movie(movie_id):
             raise ValueError("Movie ID not found")
-        self.movie_repo.update_movie(movie_id, title, genre, duration, release_date)
+        self.movie_repo.update_movie(movie_id, title, genre, duration, release_date, image_url)
         return {"message": "Movie updated", "id": movie_id}
 
     def delete_movie(self, movie_id):

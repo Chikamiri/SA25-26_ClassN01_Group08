@@ -22,9 +22,16 @@ class MovieRepository:
                 title TEXT NOT NULL,
                 genre TEXT NOT NULL,
                 duration INTEGER NOT NULL,
-                release_date TEXT NOT NULL
+                release_date TEXT NOT NULL,
+                image_url TEXT
             )
         ''')
+
+        # Migration for image_url
+        cursor.execute("PRAGMA table_info(movies)")
+        columns = [info[1] for info in cursor.fetchall()]
+        if 'image_url' not in columns:
+            cursor.execute("ALTER TABLE movies ADD COLUMN image_url TEXT")
 
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS rooms (
@@ -78,20 +85,20 @@ class MovieRepository:
 
     # --- Movie Methods ---
 
-    def add_movie(self, id, title, genre, duration, release_date):
+    def add_movie(self, id, title, genre, duration, release_date, image_url=None):
         conn = self._get_connection()
         cursor = conn.cursor()
         
         if id is not None:
             cursor.execute(
-                'INSERT INTO movies (id, title, genre, duration, release_date) VALUES (?, ?, ?, ?, ?)',
-                (id, title, genre, duration, release_date)
+                'INSERT INTO movies (id, title, genre, duration, release_date, image_url) VALUES (?, ?, ?, ?, ?, ?)',
+                (id, title, genre, duration, release_date, image_url)
             )
             new_id = id
         else:
             cursor.execute(
-                'INSERT INTO movies (title, genre, duration, release_date) VALUES (?, ?, ?, ?)',
-                (title, genre, duration, release_date)
+                'INSERT INTO movies (title, genre, duration, release_date, image_url) VALUES (?, ?, ?, ?, ?)',
+                (title, genre, duration, release_date, image_url)
             )
             new_id = cursor.lastrowid
             
@@ -106,7 +113,8 @@ class MovieRepository:
         row = cursor.fetchone()
         conn.close()
         if row:
-            return Movie(id=row[0], title=row[1], genre=row[2], duration=row[3], release_date=row[4])
+            # We assume the order: id, title, genre, duration, release_date, image_url
+            return Movie(id=row[0], title=row[1], genre=row[2], duration=row[3], release_date=row[4], image_url=row[5] if len(row) > 5 else None)
         return None
 
     def get_all_movies(self):
@@ -115,7 +123,7 @@ class MovieRepository:
         cursor.execute('SELECT * FROM movies')
         rows = cursor.fetchall()
         conn.close()
-        return [Movie(id=r[0], title=r[1], genre=r[2], duration=r[3], release_date=r[4]) for r in rows]
+        return [Movie(id=r[0], title=r[1], genre=r[2], duration=r[3], release_date=r[4], image_url=r[5] if len(r) > 5 else None) for r in rows]
 
     def search_movies(self, query):
         conn = self._get_connection()
@@ -123,13 +131,13 @@ class MovieRepository:
         cursor.execute("SELECT * FROM movies WHERE title LIKE ?", (f'%{query}%',))
         rows = cursor.fetchall()
         conn.close()
-        return [Movie(id=r[0], title=r[1], genre=r[2], duration=r[3], release_date=r[4]) for r in rows]
+        return [Movie(id=r[0], title=r[1], genre=r[2], duration=r[3], release_date=r[4], image_url=r[5] if len(r) > 5 else None) for r in rows]
 
-    def update_movie(self, movie_id, title, genre, duration, release_date):
+    def update_movie(self, movie_id, title, genre, duration, release_date, image_url=None):
         conn = self._get_connection()
         conn.execute(
-            'UPDATE movies SET title = ?, genre = ?, duration = ?, release_date = ? WHERE id = ?',
-            (title, genre, duration, release_date, movie_id)
+            'UPDATE movies SET title = ?, genre = ?, duration = ?, release_date = ?, image_url = ? WHERE id = ?',
+            (title, genre, duration, release_date, image_url, movie_id)
         )
         conn.commit()
         conn.close()

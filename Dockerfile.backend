@@ -20,9 +20,9 @@ COPY seed_db.py .
 # Set the PYTHONPATH environment variable
 ENV PYTHONPATH=/app/src
 
-# Make port 5000-5004 available to the world outside this container
+# Make port 5001-5005 available to the world outside this container
 # (Documentation only, compose handles mapping)
-EXPOSE 5000 5001 5002 5003 5004
+EXPOSE 5001 5002 5003 5004 5005
 
 # Define environment variable
 ENV PYTHONUNBUFFERED=1

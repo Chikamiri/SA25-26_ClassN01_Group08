@@ -1,4 +1,4 @@
-import { getMovieById, getShowtimes, getRooms } from '../api/apiClient.js';
+import { getMovieById, getShowtimes, getRooms, API_GATEWAY_URL } from '../api/apiClient.js';
 
 const MovieDetailsPage = {
   render: async () => {
@@ -72,17 +72,22 @@ const MovieDetailsPage = {
         // Render Structure
         container.innerHTML = `
             <div class="row g-5">
-              <div class="col-md-3">
-                <div class="card border-0 shadow-sm sticky-top" style="top: 2rem; z-index: 1;">
-                  <div class="card-body bg-dark text-white rounded p-5 text-center d-flex align-items-center justify-content-center" style="min-height: 400px;">
-                    <div>
-                        <h1 class="display-1">🎬</h1>
-                        <p class="mb-0 text-muted">Poster</p>
+              <div class="col-md-4">
+                <div class="card border-0 shadow-lg sticky-top" style="top: 2rem; z-index: 1; border-radius: 12px; overflow: hidden;">
+                  ${movie.image_url ? `
+                    <img src="${API_GATEWAY_URL}/movies/posters/${movie.image_url}" 
+                         class="img-fluid movie-poster" 
+                         style="aspect-ratio: 2/3; width: 100%; height: auto; object-fit: cover;"
+                         alt="${movie.title}"
+                         onerror="this.parentElement.innerHTML='<div class=\\'movie-poster d-flex align-items-center justify-content-center bg-dark text-white\\' style=\\'aspect-ratio: 2/3; width: 100%; height: auto;\\'><h1 class=\\'display-1\\'>🎬</h1></div>'">
+                  ` : `
+                    <div class="movie-poster d-flex align-items-center justify-content-center bg-dark text-white" style="aspect-ratio: 2/3; width: 100%; height: auto;">
+                      <h1 class="display-1">🎬</h1>
                     </div>
-                  </div>
+                  `}
                 </div>
               </div>
-              <div class="col-md-9">
+              <div class="col-md-8">
                 <h1 class="fw-bold mb-2">${movie.title}</h1>
                 <div class="mb-4">
                   <span class="badge bg-primary me-2">${movie.genre}</span>

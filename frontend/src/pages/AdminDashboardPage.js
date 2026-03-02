@@ -1,4 +1,5 @@
 
+// v1.1.0 - Cache-busting comment added
 import AdminSidebar from '../components/AdminSidebar.js';
 import { getMovies, getAllBookings, getAllUsers, getShowtimes } from '../api/apiClient.js';
 import { jsPDF } from 'jspdf';
@@ -6,6 +7,7 @@ import autoTable from 'jspdf-autotable';
 
 const AdminDashboardPage = {
   render: async () => {
+    console.log("AdminDashboardPage: Rendering v1.1.0...");
     const user = JSON.parse(localStorage.getItem('user'));
     
     if (!user || user.role !== 'admin') {
@@ -28,34 +30,39 @@ const AdminDashboardPage = {
     let usersCount = 0;
     let recentActivity = [];
 
-    let movies = [];
-    let bookings = [];
-    let showtimes = [];
+    let moviesList = [];
+    let bookingsList = [];
+    let usersList = [];
+    let showtimesList = [];
 
     try {
+        console.log("AdminDashboardPage: Fetching all data...");
         const [m, b, u, s] = await Promise.all([
             getMovies(),
             getAllBookings(),
             getAllUsers(),
             getShowtimes()
         ]);
-        movies = m;
-        bookings = b;
-        showtimes = s;
-
-        moviesCount = movies.length;
         
-        if (Array.isArray(bookings)) {
-            bookingsCount = bookings.length;
-            revenue = bookings.reduce((sum, b) => sum + (b.amount || 0), 0);
-            
-            // Get last 5 bookings for activity
-            recentActivity = bookings.sort((a,b) => b.id - a.id).slice(0, 5);
-        }
+        moviesList = Array.isArray(m) ? m : [];
+        bookingsList = Array.isArray(b) ? b : [];
+        usersList = Array.isArray(u) ? u : [];
+        showtimesList = Array.isArray(s) ? s : [];
 
-        if (Array.isArray(users)) {
-            usersCount = users.filter(u => u.role === 'customer').length;
-        }
+        console.log("AdminDashboardPage: Data results:", { 
+            movies: moviesList.length, 
+            bookings: bookingsList.length, 
+            users: usersList.length 
+        });
+
+        moviesCount = moviesList.length;
+        bookingsCount = bookingsList.length;
+        revenue = bookingsList.reduce((sum, b) => sum + (b.amount || 0), 0);
+        
+        // Get last 5 bookings for activity
+        recentActivity = [...bookingsList].sort((a,b) => b.id - a.id).slice(0, 5);
+        
+        usersCount = usersList.filter(u => u.role === 'customer').length;
 
     } catch (e) {
         console.error("Error fetching dashboard stats:", e);

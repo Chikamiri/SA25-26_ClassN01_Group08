@@ -1,4 +1,4 @@
-import { getMovies, createMovie, updateMovie, deleteMovie, getAllBookings, getShowtimes } from '../api/apiClient.js';
+import { getMovies, createMovie, updateMovie, deleteMovie, getAllBookings, getShowtimes, uploadMoviePoster, API_GATEWAY_URL } from '../api/apiClient.js';
 import AdminSidebar from '../components/AdminSidebar.js';
 
 const AdminMoviesPage = {
@@ -15,74 +15,91 @@ const AdminMoviesPage = {
                     </button>
                 </div>
 
-                <div class="card shadow-sm border-0">
-                    <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle mb-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th class="ps-4">Movie Title</th>
-                                        <th>Genre</th>
-                                        <th>Duration</th>
-                                        <th>Release Date</th>
-                                        <th>Total Revenue (VND)</th>
-                                        <th class="text-end pe-4">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="admin-movies-list">
-                                    <tr><td colspan="5" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                 <!-- Bootstrap Modal -->
-                <div class="modal fade" id="movieModal" tabindex="-1" aria-hidden="true">
-                    <div class="modal-dialog modal-dialog-centered">
-                        <div class="modal-content">
-                            <div class="modal-header bg-light">
-                                <h5 class="modal-title fw-bold" id="modal-title">Add Movie</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body p-4">
-                                <form id="movie-form">
-                                    <input type="hidden" id="movie-id">
-                                    <div class="mb-3">
-                                        <label class="form-label text-muted small fw-bold text-uppercase">Movie title</label>
-                                        <input type="text" id="movie-title" class="form-control" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label text-muted small fw-bold text-uppercase">Genre</label>
-                                        <input type="text" id="movie-genre" class="form-control" required>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-md-6 mb-3">
-                                            <label class="form-label text-muted small fw-bold text-uppercase">Duration (minutes)</label>
-                                            <input type="number" id="movie-duration" class="form-control" required min="1">
-                                        </div>
-                                        <div class="col-md-6 mb-3">
-                                            <label class="form-label text-muted small fw-bold text-uppercase">Release date</label>
-                                            <input type="date" id="movie-release-date" class="form-control" required>
-                                        </div>
-                                    </div>
-                                    <div class="text-end mt-4">
-                                        <button type="button" class="btn btn-light me-2" data-bs-dismiss="modal">Cancel</button>
-                                        <button type="submit" class="btn btn-primary px-4">Save</button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
+                <div class="card border-0 shadow-sm overflow-hidden">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="ps-4" style="width: 80px;">Poster</th>
+                                    <th>Title</th>
+                                    <th>Genre</th>
+                                    <th>Duration</th>
+                                    <th>Release Date</th>
+                                    <th>Revenue (VND)</th>
+                                    <th class="text-end pe-4">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-movies-list">
+                                <!-- Movies injected here -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
+        </div>
+      </div>
+
+      <!-- Add/Edit Modal -->
+      <div class="modal fade" id="movieModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="modal-title">Add Movie</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <form id="movie-form">
+                <input type="hidden" id="movie-id">
+                <div class="row g-3">
+                  <div class="col-md-8">
+                    <div class="mb-3">
+                      <label class="form-label">Title</label>
+                      <input type="text" id="movie-title" class="form-control" required>
+                    </div>
+                    <div class="row">
+                      <div class="col-md-6 mb-3">
+                        <label class="form-label">Genre</label>
+                        <input type="text" id="movie-genre" class="form-control" placeholder="Action, Drama..." required>
+                      </div>
+                      <div class="col-md-6 mb-3">
+                        <label class="form-label">Duration (mins)</label>
+                        <input type="number" id="movie-duration" class="form-control" required>
+                      </div>
+                    </div>
+                    <div class="mb-3">
+                      <label class="form-label">Release Date</label>
+                      <input type="date" id="movie-release-date" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                      <label class="form-label">Image URL (Optional)</label>
+                      <input type="text" id="movie-image-url" class="form-control" placeholder="image.jpg">
+                    </div>
+                    <div class="mb-3">
+                      <label class="form-label">Upload Poster File</label>
+                      <input type="file" id="movie-file" class="form-control" accept="image/*">
+                      <div class="form-text">Choose a file to upload or enter a URL above.</div>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                     <label class="form-label d-block">Poster Preview</label>
+                     <div id="poster-preview" class="border rounded bg-light d-flex align-items-center justify-content-center text-muted overflow-hidden" style="height: 300px;">
+                        🎬
+                     </div>
+                  </div>
+                </div>
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+              <button type="submit" form="movie-form" class="btn btn-primary">Save Movie</button>
+            </div>
+          </div>
         </div>
       </div>
     `;
   },
   afterRender: async () => {
     AdminSidebar.afterRender();
-
     const list = document.getElementById('admin-movies-list');
     const addBtn = document.getElementById('add-movie-btn');
     const form = document.getElementById('movie-form');
@@ -97,15 +114,39 @@ const AdminMoviesPage = {
     const genreInput = document.getElementById('movie-genre');
     const durationInput = document.getElementById('movie-duration');
     const releaseDateInput = document.getElementById('movie-release-date');
+    const imageUrlInput = document.getElementById('movie-image-url');
+    const fileInput = document.getElementById('movie-file');
+    const posterPreview = document.getElementById('poster-preview');
 
     let moviesData = [];
     let bookingsData = [];
     let showtimesData = [];
 
+    // Preview image on selection
+    fileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            imageUrlInput.value = ''; // Clear the text input when a file is selected
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                posterPreview.innerHTML = `<img src="${e.target.result}" style="width:100%; height:100%; object-fit:cover;">`;
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    const updatePreview = (url) => {
+        if (url) {
+            posterPreview.innerHTML = `<img src="${API_GATEWAY_URL}/movies/posters/${url}" style="width:100%; height:100%; object-fit:cover;" onerror="this.parentElement.innerHTML='🎬'">`;
+        } else {
+            posterPreview.innerHTML = '<span class="text-muted">🎬</span>';
+        }
+    };
+
     const renderList = (movies) => {
         moviesData = movies;
         if (movies.length === 0) {
-            list.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-5">No movies yet.</td></tr>';
+            list.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-5">No movies yet.</td></tr>';
             return;
         }
         list.innerHTML = movies.map(movie => {
@@ -120,7 +161,20 @@ const AdminMoviesPage = {
 
             return `
               <tr>
-                <td class="ps-4 fw-bold text-primary">${movie.title}</td>
+                <td class="ps-4">
+                    ${movie.image_url ? `
+                        <img src="${API_GATEWAY_URL}/movies/posters/${movie.image_url}" 
+                             class="rounded shadow-sm" 
+                             style="width: 45px; height: 60px; object-fit: cover;"
+                             alt="${movie.title}"
+                             onerror="this.parentElement.innerHTML='<div class=\\'rounded shadow-sm bg-dark text-white d-flex align-items-center justify-content-center\\' style=\\'width: 45px; height: 60px;\\'>🎬</div>'">
+                    ` : `
+                        <div class="rounded shadow-sm bg-dark text-white d-flex align-items-center justify-content-center" style="width: 45px; height: 60px;">
+                            🎬
+                        </div>
+                    `}
+                </td>
+                <td class="fw-bold text-primary">${movie.title}</td>
                 <td><span class="badge bg-light text-dark border">${movie.genre}</span></td>
                 <td>${movie.duration} minutes</td>
                 <td>${new Date(movie.release_date).toLocaleDateString()}</td>
@@ -157,44 +211,73 @@ const AdminMoviesPage = {
             showtimesData = showtimes;
             renderList(movies);
         } catch (err) {
-            list.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-4">Error loading data: ${err.message}</td></tr>`;
+            list.innerHTML = `<tr><td colspan="7" class="text-center text-danger py-5">Error: ${err.message}</td></tr>`;
         }
     };
 
     const openEditModal = (id) => {
         const movie = moviesData.find(m => m.id == id);
-        if (movie) {
-            idInput.value = movie.id;
-            titleInput.value = movie.title;
-            genreInput.value = movie.genre;
-            durationInput.value = movie.duration;
-            releaseDateInput.value = movie.release_date;
-            modalTitle.innerText = 'Edit Movie';
-            movieModal.show();
-        }
+        if (!movie) return;
+        
+        modalTitle.innerText = 'Edit Movie';
+        idInput.value = movie.id;
+        titleInput.value = movie.title;
+        genreInput.value = movie.genre;
+        durationInput.value = movie.duration;
+        releaseDateInput.value = movie.release_date;
+        imageUrlInput.value = movie.image_url || '';
+        fileInput.value = ''; // Reset file input
+        updatePreview(movie.image_url);
+        movieModal.show();
     };
 
     addBtn.addEventListener('click', () => {
+        modalTitle.innerText = 'Add Movie';
         form.reset();
         idInput.value = '';
-        modalTitle.innerText = 'Add Movie';
+        updatePreview('');
         movieModal.show();
+    });
+
+    imageUrlInput.addEventListener('input', (e) => {
+        if (e.target.value) {
+            fileInput.value = ''; // Clear file selection if typing a URL
+        }
+        updatePreview(e.target.value);
     });
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const id = idInput.value;
+
+        let finalImageUrl = imageUrlInput.value;
+
+        // 1. Handle File Upload if new file selected
+        if (fileInput.files && fileInput.files[0]) {
+            const file = fileInput.files[0];
+            const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+
+            if (!allowedTypes.includes(file.type)) {
+                alert('Please upload a valid image file (JPG, PNG, GIF, or WEBP).');
+                return;
+            }
+
+            try {
+                const uploadRes = await uploadMoviePoster(file);
+                finalImageUrl = uploadRes.filename;
+            } catch (err) {
+                alert('Upload failed: ' + err.message);
+                return;
+            }
+        }
+
         const data = {
             title: titleInput.value,
             genre: genreInput.value,
             duration: parseInt(durationInput.value),
-            release_date: releaseDateInput.value
+            release_date: releaseDateInput.value,
+            image_url: finalImageUrl
         };
-
-        if (data.duration <= 0) {
-            alert('Duration must be greater than 0');
-            return;
-        }
 
         try {
             if (id) {
@@ -205,18 +288,17 @@ const AdminMoviesPage = {
             movieModal.hide();
             fetchMovies();
         } catch (err) {
-            alert('Error: ' + err.message);
+            alert('Failed to save movie: ' + err.message);
         }
     });
 
     const handleDelete = async (id) => {
-        if (confirm('Are you sure you want to delete this movie?')) {
-            try {
-                await deleteMovie(id);
-                fetchMovies();
-            } catch (err) {
-                alert('Error: ' + err.message);
-            }
+        if (!confirm('Are you sure you want to delete this movie? This will also cancel all associated showtimes and refund customers!')) return;
+        try {
+            await deleteMovie(id);
+            fetchMovies();
+        } catch (err) {
+            alert('Delete failed: ' + err.message);
         }
     };
 

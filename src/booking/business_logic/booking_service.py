@@ -78,40 +78,31 @@ class BookingService:
         except requests.exceptions.ConnectionError:
             print("Warning: Cannot connect to Movie Service to verify details. Using defaults.")
 
-        created_bookings = []
         total_booking_amount = 0
+        for seat_num in seat_numbers:
+            seat_info = self.booking_repo.get_seat_details(showtime_id, seat_num)
+            surcharge = seat_info['price_surcharge'] if seat_info else 0
+            total_booking_amount += (base_price + surcharge)
 
         try:
-            for seat_num in seat_numbers:
-                # Fetch seat info to get surcharge
-                seat_info = self.booking_repo.get_seat_details(showtime_id, seat_num)
-                surcharge = seat_info['price_surcharge'] if seat_info else 0
-                final_price = base_price + surcharge
-                
-                total_booking_amount += final_price
+            # Create a single booking for all seats
+            bk_id = self.booking_repo.create_booking(showtime_id, seat_numbers, email, total_booking_amount)
+            
+            # Send ONE notification for the entire booking
+            seats_str = ", ".join(seat_numbers)
+            self.send_ticket_email(bk_id, email, seats_str, movie_title)
 
-                bk_id = self.booking_repo.create_booking(showtime_id, seat_num, email, final_price)
-                created_bookings.append({"id": bk_id, "seat": seat_num})
+            return {
+                "message": "Booking successful", 
+                "booking_id": bk_id,
+                "booking_ids": [bk_id], # Keep for backward compatibility if needed
+                "total_price": total_booking_amount,
+                "movie": movie_title,
+                "seats": seats_str
+            }
         except Exception as e:
-            # Rollback: Delete any bookings created in this session
-            print(f"Booking failed for one seat, rolling back {len(created_bookings)} bookings. Error: {e}")
-            for bk in created_bookings:
-                try:
-                    self.booking_repo.delete_booking(bk['id'])
-                except:
-                    pass # Best effort rollback
+            print(f"Booking failed. Error: {e}")
             raise e
-        
-        # Send emails
-        for bk in created_bookings:
-            self.send_ticket_email(bk['id'], email, bk['seat'], movie_title)
-
-        return {
-            "message": "Booking successful", 
-            "booking_ids": [bk['id'] for bk in created_bookings], 
-            "total_price": total_booking_amount,
-            "movie": movie_title
-        }
 
     
     def cancel_all_bookings_for_showtime(self, showtime_id):

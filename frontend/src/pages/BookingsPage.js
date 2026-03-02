@@ -438,30 +438,25 @@ const BookingsPage = {
         errorMsg.innerText = '';
 
         try {
+            // Send selectedSeats as array to bookTicket
             const response = await bookTicket({
                 showtime_id: parseInt(showtimeId),
                 seat_numbers: selectedSeats
             });
 
-            // The backend now returns { booking_ids: [...], total_price: ... }
-            // Or { booking_id: ... } if fallback. 
-            // We implemented booking_ids.
-            
-            if (response.booking_ids) {
-                currentBookingIds = response.booking_ids;
-            } else if (response.booking_id) {
-                currentBookingIds = [response.booking_id];
-            }
-
+            // The backend now returns a single booking_id for multiple seats
+            const bkId = response.booking_id || (response.booking_ids ? response.booking_ids[0] : null);
             const totalPrice = response.total_price || response.price;
 
-            // Redirect to Payment Page
-            window.location.href = `/payment?booking_ids=${currentBookingIds.join(',')}&amount=${totalPrice}`;
+            if (!bkId) throw new Error("Booking failed: No ID returned");
+
+            // Redirect to Payment Page with single booking_id
+            window.location.href = `/payment?booking_id=${bkId}&amount=${totalPrice}`;
 
         } catch (err) {
             errorMsg.innerText = err.message || 'An error occurred while booking.';
             confirmBtn.disabled = false;
-            confirmBtn.innerText = 'Continue booking';
+            confirmBtn.innerText = 'Book Now';
         }
     });
 

@@ -128,3 +128,13 @@
 - Implement a 7-column layout for the calendar view with month navigation.
 - Add showtime count indicators on calendar days to highlight available dates.
 - Enhanced calendar styling with responsive design for improved mobile user experience.
+
+## 2/3/2026
+
+- Relocated API Gateway to port `5005` to resolve port conflicts with Docker
+- Implemented **Grouped Bookings**: Multiple seats are now processed under a single Booking ID per transaction (ASR 2 improvement).
+- Refactored `BookingRepository` and `BookingService` to store and manage comma-separated seat strings for unified orders.
+- Implement movie posters both front and back end.
+- Improved Movie Management UX: Added cross-clearing logic for File Upload and Image URL inputs.
+- Updated `seed_db.py` to simulate grouped seat bookings in the test dataset.
+- Update `README.md`.

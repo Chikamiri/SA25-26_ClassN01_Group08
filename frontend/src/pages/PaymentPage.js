@@ -3,10 +3,13 @@ import { processPayment, getBookingById, getPaymentMethods, savePaymentMethod } 
 const PaymentPage = {
   render: async () => {
     const params = new URLSearchParams(window.location.search);
+    const bookingId = params.get('booking_id');
     const bookingIds = params.get('booking_ids');
     const amount = params.get('amount');
 
-    if (!bookingIds) {
+    const displayIds = bookingId ? [bookingId] : (bookingIds ? bookingIds.split(',') : []);
+
+    if (displayIds.length === 0) {
         return `
             <div class="container py-5 text-center">
                 <div class="alert alert-danger">Booking information not found.</div>
@@ -25,7 +28,7 @@ const PaymentPage = {
                     </div>
                     <div class="card-body p-4">
                         <div class="alert alert-info mb-4">
-                            You are paying for booking IDs: <strong>#${bookingIds.split(',').join(', #')}</strong><br>
+                            You are paying for booking ID${displayIds.length > 1 ? 's' : ''}: <strong>#${displayIds.join(', #')}</strong><br>
                             Total amount: <strong class="fs-5 text-success">${parseInt(amount || 0).toLocaleString()} VND</strong>
                         </div>
 
@@ -82,10 +85,12 @@ const PaymentPage = {
   },
   afterRender: async () => {
     const params = new URLSearchParams(window.location.search);
+    const bookingId = params.get('booking_id');
     const bookingIdsStr = params.get('booking_ids');
-    if (!bookingIdsStr) return;
     
-    const bookingIds = bookingIdsStr.split(',');
+    const bookingIds = bookingId ? [bookingId] : (bookingIdsStr ? bookingIdsStr.split(',') : []);
+    if (bookingIds.length === 0) return;
+    
     const amount = params.get('amount');
     const contentDiv = document.getElementById('payment-content');
     

@@ -90,7 +90,8 @@ def seed_movies():
             title TEXT NOT NULL,
             genre TEXT NOT NULL,
             duration INTEGER NOT NULL,
-            release_date TEXT NOT NULL
+            release_date TEXT NOT NULL,
+            image_url TEXT
         )
     ''')
     
@@ -148,37 +149,37 @@ def seed_movies():
 
     # --- SEED MOVIES (~20) ---
     movies_data = [
-        ("Inception", "Sci-Fi", 148, "2010-07-16"),
-        ("The Dark Knight", "Action", 152, "2008-07-18"),
-        ("Interstellar", "Adventure", 169, "2014-11-07"),
-        ("The Matrix", "Sci-Fi", 136, "1999-03-31"),
-        ("Avengers: Endgame", "Action", 181, "2019-04-26"),
-        ("Parasite", "Drama", 132, "2019-05-30"),
-        ("Spirited Away", "Animation", 125, "2001-07-20"),
-        ("The Godfather", "Crime", 175, "1972-03-24"),
-        ("Pulp Fiction", "Crime", 154, "1994-10-14"),
-        ("Forrest Gump", "Drama", 142, "1994-07-06"),
-        ("Dune: Part Two", "Sci-Fi", 166, "2024-03-01"),
-        ("Oppenheimer", "Biography", 180, "2023-07-21"),
-        ("Barbie", "Comedy", 114, "2023-07-21"),
-        ("Spider-Man: Across the Spider-Verse", "Animation", 140, "2023-06-02"),
-        ("The Shawshank Redemption", "Drama", 142, "1994-09-23"),
-        ("Schindler's List", "Biography", 195, "1993-11-30"),
-        ("Fight Club", "Drama", 139, "1999-10-15"),
-        ("Goodfellas", "Crime", 146, "1990-09-19"),
-        ("The Silence of the Lambs", "Thriller", 118, "1991-02-14"),
-        ("Seven Samurai", "Action", 207, "1954-04-26")
+        ("Inception", "Sci-Fi", 148, "2010-07-16", "Inception.jpg"),
+        ("The Dark Knight", "Action", 152, "2008-07-18", "The_Dark_Knight.jpg"),
+        ("Interstellar", "Adventure", 169, "2014-11-07", "Interstellar.webp"),
+        ("The Matrix", "Sci-Fi", 136, "1999-03-31", "The_Matrix.jpg"),
+        ("Avengers: Endgame", "Action", 181, "2019-04-26", "Avenger_Endgame.jpg"),
+        ("Parasite", "Drama", 132, "2019-05-30", "Parasite.jpg"),
+        ("Spirited Away", "Animation", 125, "2001-07-20", "Spirited_Away.jpg"),
+        ("The Godfather", "Crime", 175, "1972-03-24", "The_Godfather.jpg"),
+        ("Pulp Fiction", "Crime", 154, "1994-10-14", "Pulp_Fiction.jpg"),
+        ("Forrest Gump", "Drama", 142, "1994-07-06", "Forest_Gump.jpg"),
+        ("Dune: Part Two", "Sci-Fi", 166, "2024-03-01", "Dune_Part_Two.jpg"),
+        ("Oppenheimer", "Biography", 180, "2023-07-21", "Oppenheimer.jpg"),
+        ("Barbie", "Comedy", 114, "2023-07-21", "Barbie.jpg"),
+        ("Spider-Man: Across the Spider-Verse", "Animation", 140, "2023-06-02", "Spiderman.jpg"),
+        ("The Shawshank Redemption", "Drama", 142, "1994-09-23", "The_Shawshank_Redemption.jpg"),
+        ("Schindler's List", "Biography", 195, "1993-11-30", "Schindler's_List.jpg"),
+        ("Fight Club", "Drama", 139, "1999-10-15", "Fight_Club.jpg"),
+        ("Goodfellas", "Crime", 146, "1990-09-19", "Goodfellas.jpg"),
+        ("The Silence of the Lambs", "Thriller", 118, "1991-02-14", "The_Silence_of_the_Lambs.jpg"),
+        ("Seven Samurai", "Action", 207, "1954-04-26", "Seven_Samurai.jpg")
     ]
     
     today = datetime.date.today()
     created_showtimes = [] # List of (id, price, start_time_str)
 
-    for title, genre, duration, release_date in movies_data:
+    for title, genre, duration, release_date, image_url in movies_data:
         cursor.execute('SELECT id FROM movies WHERE title = ?', (title,))
         row = cursor.fetchone()
         if not row:
-            cursor.execute('INSERT INTO movies (title, genre, duration, release_date) VALUES (?, ?, ?, ?)',
-                           (title, genre, duration, release_date))
+            cursor.execute('INSERT INTO movies (title, genre, duration, release_date, image_url) VALUES (?, ?, ?, ?, ?)',
+                           (title, genre, duration, release_date, image_url))
             movie_id = cursor.lastrowid
         else:
             movie_id = row[0]
@@ -350,34 +351,45 @@ def seed_bookings(showtimes_info):
             })
             
         # --- ASSIGN BOOKINGS ---
+        booked_indices = []
         if occupancy > 0:
             # Randomly pick indices to book
-            indices_to_book = random.sample(range(len(seats_batch)), min(occupancy, len(seats_batch)))
-            for idx in indices_to_book:
+            booked_indices = random.sample(range(len(seats_batch)), min(occupancy, len(seats_batch)))
+            for idx in booked_indices:
                 seats_batch[idx]['status'] = 'booked'
         
-        # --- INSERT INTO DB ---
+        # --- INSERT SEATS ---
         for seat in seats_batch:
-            # 1. Insert Seat
             conn.execute('''
                 INSERT OR IGNORE INTO seats (showtime_id, seat_number, status, seat_type, price_surcharge)
                 VALUES (?, ?, ?, ?, ?)
             ''', (sid, seat['num'], seat['status'], seat['type'], seat['surcharge']))
             
-            # 2. Create Booking if booked
-            if seat['status'] == 'booked':
-                email = random.choice(users)
+        # --- CREATE GROUPED BOOKINGS ---
+        if booked_indices:
+            # Group seats into random "orders" (1-4 seats per order)
+            idx = 0
+            while idx < len(booked_indices):
+                group_size = random.randint(1, 4)
+                chunk = booked_indices[idx : idx + group_size]
+                idx += group_size
                 
-                # Status logic
+                email = random.choice(users)
                 is_past = start_time < today_str
                 bk_status = 'confirmed' if is_past else random.choice(['confirmed', 'confirmed', 'PENDING_PAYMENT'])
                 
-                total_price = price + seat['surcharge']
+                seat_nums = [seats_batch[i]['num'] for i in chunk]
+                seats_str = ",".join(seat_nums)
+                
+                # Calculate total amount for this group
+                total_amount = 0
+                for i in chunk:
+                    total_amount += (price + seats_batch[i]['surcharge'])
                 
                 conn.execute('''
                     INSERT INTO bookings (showtime_id, seat_number, customer_email, amount, status)
                     VALUES (?, ?, ?, ?, ?)
-                ''', (sid, seat['num'], email, total_price, bk_status))
+                ''', (sid, seats_str, email, total_amount, bk_status))
                 total_bookings += 1
 
     conn.commit()

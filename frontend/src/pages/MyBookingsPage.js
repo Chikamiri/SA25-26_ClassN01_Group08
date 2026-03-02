@@ -72,7 +72,7 @@ const MyBookingsPage = {
                           </td>
                           <td class="text-end pe-4">
                              ${isPending ? `
-                                <a href="/payment?booking_ids=${booking.id}&amount=${booking.amount}" class="btn btn-sm btn-primary me-2">
+                                <a href="/payment?booking_id=${booking.id}&amount=${booking.amount}" class="btn btn-sm btn-primary me-2">
                                     Pay
                                 </a>
                              ` : ''}

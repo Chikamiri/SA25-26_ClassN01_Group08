@@ -1,7 +1,7 @@
 // src/api/apiClient.js
 
-// Base URL for API Gateway. It runs on port 5000 by default.
-export const API_GATEWAY_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:5000/api';
+// Base URL for API Gateway. It runs on port 5005 by default.
+export const API_GATEWAY_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:5005/api';
 
 // Helper function to make fetch requests with Authorization header if available
 export async function request(endpoint, options = {}) {
@@ -207,6 +207,29 @@ export async function updatePaymentMethod(id, data) {
 }
 
 // --- Admin APIs (Movies) ---
+
+export async function uploadMoviePoster(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+  
+  // Custom fetch since request helper forces application/json
+  const user = localStorage.getItem('user');
+  const userToken = user ? JSON.parse(user).token : null;
+
+  const headers = {
+    'peko-key': 'BO_CHIKA',
+  };
+  if (userToken) headers['Authorization'] = `Bearer ${userToken}`;
+
+  const response = await fetch(`${API_GATEWAY_URL}/movies/upload`, {
+    method: 'POST',
+    body: formData,
+    headers
+  });
+
+  if (!response.ok) throw new Error('Failed to upload image');
+  return await response.json();
+}
 
 export async function createMovie(movieData) {
   return request('movies', {
