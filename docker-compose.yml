@@ -5,7 +5,8 @@ services:
       - "5672:5672"
       - "15672:15672"
     environment:
-      - RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbit allow_remote_guest_access true
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=admin
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
       interval: 10s
@@ -30,11 +31,16 @@ services:
       - ./src:/app/src
       - ./tests:/app/tests
     depends_on:
-      - movie_service
-      - booking_service
-      - payment_service
-      - user_service
-      - rabbitmq
+      movie_service:
+        condition: service_started
+      booking_service:
+        condition: service_started
+      payment_service:
+        condition: service_started
+      user_service:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
 
   movie_service:
     build:

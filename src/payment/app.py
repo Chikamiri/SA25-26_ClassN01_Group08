@@ -51,7 +51,8 @@ def send_invoice_event(invoice_data):
         if RABBITMQ_URL:
              params = pika.URLParameters(RABBITMQ_URL)
         else:
-             params = pika.ConnectionParameters(host=RABBITMQ_HOST, port=5672)
+             url = f"amqp://admin:admin@{RABBITMQ_HOST}:5672/%2F"
+             params = pika.URLParameters(url)
         
         connection = pika.BlockingConnection(params)
         channel = connection.channel()

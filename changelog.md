@@ -152,3 +152,4 @@
 - Removed redundant `COPY seed_db.py` in `Dockerfile.backend`.
 - Refactored RabbitMQ connection logic across all services to eliminate unreachable code.
 - Implemented centralized frontend route protection for `/admin/*` pages in `main.js`.
+- RabbitMQ's connecting issue

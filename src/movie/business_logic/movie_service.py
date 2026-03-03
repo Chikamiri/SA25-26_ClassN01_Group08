@@ -36,26 +36,29 @@ class MovieService:
         
         return movie
 
-    def send_notification_event(self, message_data):
+    def send_notification_events(self, messages):
+        if not messages: return
         try:
             if self.RABBITMQ_URL:
                  params = pika.URLParameters(self.RABBITMQ_URL)
             else:
-                 params = pika.ConnectionParameters(host=self.RABBITMQ_HOST, port=5672)
+                 url = f"amqp://admin:admin@{self.RABBITMQ_HOST}:5672/%2F"
+                 params = pika.URLParameters(url)
             
             connection = pika.BlockingConnection(params)
             channel = connection.channel()
             channel.queue_declare(queue='notification_events', durable=True)
             
-            channel.basic_publish(
-                exchange='',
-                routing_key='notification_events',
-                body=json.dumps(message_data),
-                properties=pika.BasicProperties(delivery_mode=2)
-            )
+            for msg in messages:
+                channel.basic_publish(
+                    exchange='',
+                    routing_key='notification_events',
+                    body=json.dumps(msg),
+                    properties=pika.BasicProperties(delivery_mode=2)
+                )
             connection.close()
         except Exception as e:
-            print(f"Failed to send notification: {e}")
+            print(f"Failed to send notifications: {e}")
 
     def process_refund_and_cancel(self, showtime_id, reason):
         """
@@ -67,17 +70,16 @@ class MovieService:
             
             if response.status_code == 200:
                 refund_list = response.json() 
-                
+                events = []
                 for item in refund_list:
-                    event_data = {
+                    events.append({
                         "type": "REFUND_NOTIFICATION",
                         "email": item['email'],
                         "amount": item['amount'],
                         "reason": reason,
                         "seat": item['seat']
-                    }
-                    self.send_notification_event(event_data)
-                
+                    })
+                self.send_notification_events(events)
                 return len(refund_list)
             else:
                 print(f"Booking Service returned error: {response.text}")
@@ -191,16 +193,17 @@ class MovieService:
             if response.status_code == 200:
                 customers = response.json()
                 movie = self.movie_repo.get_movie(current_showtime.movie_id)
+                events = []
                 for cust in customers:
-                    event_data = {
+                    events.append({
                         "type": "SHOWTIME_CHANGED",
                         "email": cust.get('email', 'Unknown'),
                         "seat": cust['seat_number'],
                         "movie_title": movie.title,
                         "old_time": current_showtime.start_time,
                         "new_time": start_time
-                    }
-                    self.send_notification_event(event_data)
+                    })
+                self.send_notification_events(events)
         except Exception as e:
             print(f"Could not notify change: {e}")
 

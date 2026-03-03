@@ -19,7 +19,8 @@ class BookingService:
             if self.RABBITMQ_URL:
                  params = pika.URLParameters(self.RABBITMQ_URL)
             else:
-                 params = pika.ConnectionParameters(host=self.RABBITMQ_HOST, port=5672)
+                 url = f"amqp://admin:admin@{self.RABBITMQ_HOST}:5672/%2F"
+                 params = pika.URLParameters(url)
             
             connection = pika.BlockingConnection(params)
             channel = connection.channel()
