@@ -16,7 +16,7 @@ CORS(app)
 
 BOOKING_SERVICE_URL = os.getenv("BOOKING_SERVICE_URL", "http://127.0.0.1:5002")
 RABBITMQ_HOST = os.getenv("RABBITMQ_HOST", "localhost")
-RABBITMQ_URL = os.getenv('RABBITMQ_URL', f'amqp://guest:guest@{RABBITMQ_HOST}:5672/')
+RABBITMQ_URL = os.getenv('RABBITMQ_URL')
 
 # --- Database Setup ---
 def get_db_connection():
@@ -48,12 +48,10 @@ init_db()
 # --- Helper Functions ---
 def send_invoice_event(invoice_data):
     try:
-        if RABBITMQ_HOST != 'localhost':
-             params = pika.ConnectionParameters(host=RABBITMQ_HOST, port=5672)
-        elif 'localhost' in RABBITMQ_URL:
-             params = pika.ConnectionParameters(host='localhost', port=5672)
-        else:
+        if RABBITMQ_URL:
              params = pika.URLParameters(RABBITMQ_URL)
+        else:
+             params = pika.ConnectionParameters(host=RABBITMQ_HOST, port=5672)
         
         connection = pika.BlockingConnection(params)
         channel = connection.channel()
@@ -110,12 +108,14 @@ def add_payment_method():
     masked = f"**** **** **** {card_number[-4:]}"
     
     conn = get_db_connection()
-    conn.execute('INSERT INTO cards (user_email, card_number_masked, card_holder) VALUES (?, ?, ?)',
+    cursor = conn.cursor()
+    cursor.execute('INSERT INTO cards (user_email, card_number_masked, card_holder) VALUES (?, ?, ?)',
                  (user_email, masked, card_holder))
+    card_id = cursor.lastrowid
     conn.commit()
     conn.close()
     
-    return jsonify({"message": "Card saved", "card_number": masked}), 201
+    return jsonify({"message": "Card saved", "card_number": masked, "id": card_id}), 201
 
 @app.route('/api/payment-methods/<int:card_id>', methods=['DELETE'])
 def delete_payment_method(card_id):

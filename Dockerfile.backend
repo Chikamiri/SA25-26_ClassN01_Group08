@@ -15,7 +15,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the src directory into the container at /app/src
 COPY src/ ./src/
-COPY seed_db.py .
 
 # Set the PYTHONPATH environment variable
 ENV PYTHONPATH=/app/src

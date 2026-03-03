@@ -91,10 +91,17 @@ def seed_movies():
             genre TEXT NOT NULL,
             duration INTEGER NOT NULL,
             release_date TEXT NOT NULL,
-            image_url TEXT
+            image_url TEXT,
+            description TEXT
         )
     ''')
-    
+
+    # Migration Check
+    cursor.execute("PRAGMA table_info(movies)")
+    columns = [info[1] for info in cursor.fetchall()]
+    if 'description' not in columns:
+        cursor.execute("ALTER TABLE movies ADD COLUMN description TEXT")
+
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS rooms (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -149,37 +156,37 @@ def seed_movies():
 
     # --- SEED MOVIES (~20) ---
     movies_data = [
-        ("Inception", "Sci-Fi", 148, "2010-07-16", "Inception.jpg"),
-        ("The Dark Knight", "Action", 152, "2008-07-18", "The_Dark_Knight.jpg"),
-        ("Interstellar", "Adventure", 169, "2014-11-07", "Interstellar.webp"),
-        ("The Matrix", "Sci-Fi", 136, "1999-03-31", "The_Matrix.jpg"),
-        ("Avengers: Endgame", "Action", 181, "2019-04-26", "Avenger_Endgame.jpg"),
-        ("Parasite", "Drama", 132, "2019-05-30", "Parasite.jpg"),
-        ("Spirited Away", "Animation", 125, "2001-07-20", "Spirited_Away.jpg"),
-        ("The Godfather", "Crime", 175, "1972-03-24", "The_Godfather.jpg"),
-        ("Pulp Fiction", "Crime", 154, "1994-10-14", "Pulp_Fiction.jpg"),
-        ("Forrest Gump", "Drama", 142, "1994-07-06", "Forest_Gump.jpg"),
-        ("Dune: Part Two", "Sci-Fi", 166, "2024-03-01", "Dune_Part_Two.jpg"),
-        ("Oppenheimer", "Biography", 180, "2023-07-21", "Oppenheimer.jpg"),
-        ("Barbie", "Comedy", 114, "2023-07-21", "Barbie.jpg"),
-        ("Spider-Man: Across the Spider-Verse", "Animation", 140, "2023-06-02", "Spiderman.jpg"),
-        ("The Shawshank Redemption", "Drama", 142, "1994-09-23", "The_Shawshank_Redemption.jpg"),
-        ("Schindler's List", "Biography", 195, "1993-11-30", "Schindler's_List.jpg"),
-        ("Fight Club", "Drama", 139, "1999-10-15", "Fight_Club.jpg"),
-        ("Goodfellas", "Crime", 146, "1990-09-19", "Goodfellas.jpg"),
-        ("The Silence of the Lambs", "Thriller", 118, "1991-02-14", "The_Silence_of_the_Lambs.jpg"),
-        ("Seven Samurai", "Action", 207, "1954-04-26", "Seven_Samurai.jpg")
+        ("Inception", "Sci-Fi", 148, "2010-07-16", "Inception.jpg", "A thief who steals corporate secrets through the use of dream-sharing technology is given the inverse task of planting an idea into the mind of a C.E.O."),
+        ("The Dark Knight", "Action", 152, "2008-07-18", "The_Dark_Knight.jpg", "When the menace known as the Joker wreaks havoc and chaos on the people of Gotham, Batman must accept one of the greatest psychological and physical tests of his ability to fight injustice."),
+        ("Interstellar", "Adventure", 169, "2014-11-07", "Interstellar.webp", "A team of explorers travel through a wormhole in space in an attempt to ensure humanity's survival."),
+        ("The Matrix", "Sci-Fi", 136, "1999-03-31", "The_Matrix.jpg", "A computer hacker learns from mysterious rebels about the true nature of his reality and his role in the war against its controllers."),
+        ("Avengers: Endgame", "Action", 181, "2019-04-26", "Avenger_Endgame.jpg", "After the devastating events of Avengers: Infinity War, the universe is in ruins. With the help of remaining allies, the Avengers assemble once more in order to restore balance to the universe."),
+        ("Parasite", "Drama", 132, "2019-05-30", "Parasite.jpg", "Greed and class discrimination threaten the newly formed symbiotic relationship between the wealthy Park family and the destitute Kim clan."),
+        ("Spirited Away", "Animation", 125, "2001-07-20", "Spirited_Away.jpg", "During her family's move to the suburbs, a sullen 10-year-old girl wanders into a world ruled by gods, witches, and spirits, and where humans are changed into beasts."),
+        ("The Godfather", "Crime", 175, "1972-03-24", "The_Godfather.jpg", "The aging patriarch of an organized crime dynasty transfers control of his clandestine empire to his reluctant son."),
+        ("Pulp Fiction", "Crime", 154, "1994-10-14", "Pulp_Fiction.jpg", "The lives of two mob hitmen, a boxer, a gangster and his wife, and a pair of diner bandits intertwine in four tales of violence and redemption."),
+        ("Forrest Gump", "Drama", 142, "1994-07-06", "Forest_Gump.jpg", "The presidencies of Kennedy and Johnson, the Vietnam War, the Watergate scandal and other historical events unfold from the perspective of an Alabama man with an IQ of 75, whose only desire is to be reunited with his childhood sweetheart."),
+        ("Dune: Part Two", "Sci-Fi", 166, "2024-03-01", "Dune_Part_Two.jpg", "Paul Atreides unites with Chani and the Fremen while on a warpath of revenge against the conspirators who destroyed his family."),
+        ("Oppenheimer", "Biography", 180, "2023-07-21", "Oppenheimer.jpg", "The story of American scientist J. Robert Oppenheimer and his role in the development of the atomic bomb."),
+        ("Barbie", "Comedy", 114, "2023-07-21", "Barbie.jpg", "Barbie suffers a crisis that leads her to question her world and her existence."),
+        ("Spider-Man: Across the Spider-Verse", "Animation", 140, "2023-06-02", "Spiderman.jpg", "Miles Morales catapults across the Multiverse, where he encounters a team of Spider-People charged with protecting its very existence."),
+        ("The Shawshank Redemption", "Drama", 142, "1994-09-23", "The_Shawshank_Redemption.jpg", "Over the course of several years, two convicts form a friendship, seeking consolation and, eventually, redemption through basic compassion."),
+        ("Schindler's List", "Biography", 195, "1993-11-30", "Schindler's_List.jpg", "In German-occupied Poland during World War II, industrialist Oskar Schindler gradually becomes concerned for his Jewish workforce after witnessing their persecution by the Nazis."),
+        ("Fight Club", "Drama", 139, "1999-10-15", "Fight_Club.jpg", "An insomniac office worker and a devil-may-care shoemaker form an underground fight club that evolves into much more."),
+        ("Goodfellas", "Crime", 146, "1990-09-19", "Goodfellas.jpg", "The story of Henry Hill and his life in the mob, covering his relationship with his wife Karen Hill and his mob partners Jimmy Conway and Tommy DeVito in the Italian-American crime syndicate."),
+        ("The Silence of the Lambs", "Thriller", 118, "1991-02-14", "The_Silence_of_the_Lambs.jpg", "A young F.B.I. cadet must receive the help of an incarcerated and manipulative cannibal killer to help catch another serial killer, a madman who skins his victims."),
+        ("Seven Samurai", "Action", 207, "1954-04-26", "Seven_Samurai.jpg", "Farmers from a village exploited by bandits hire seven unemployed samurai for protection.")
     ]
     
     today = datetime.date.today()
     created_showtimes = [] # List of (id, price, start_time_str)
 
-    for title, genre, duration, release_date, image_url in movies_data:
+    for title, genre, duration, release_date, image_url, description in movies_data:
         cursor.execute('SELECT id FROM movies WHERE title = ?', (title,))
         row = cursor.fetchone()
         if not row:
-            cursor.execute('INSERT INTO movies (title, genre, duration, release_date, image_url) VALUES (?, ?, ?, ?, ?)',
-                           (title, genre, duration, release_date, image_url))
+            cursor.execute('INSERT INTO movies (title, genre, duration, release_date, image_url, description) VALUES (?, ?, ?, ?, ?, ?)',
+                           (title, genre, duration, release_date, image_url, description))
             movie_id = cursor.lastrowid
         else:
             movie_id = row[0]

@@ -4,11 +4,14 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+    environment:
+      - RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbit allow_remote_guest_access true
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
-      interval: 30s
-      timeout: 30s
-      retries: 3
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 15s
 
   gateway:
     build:
@@ -42,6 +45,7 @@ services:
       - "5001:5001"
     environment:
       - RABBITMQ_HOST=rabbitmq
+      - BOOKING_SERVICE_URL=http://booking_service:5002
     volumes:
       - ./src:/app/src
       - ./tests:/app/tests

@@ -74,8 +74,20 @@ const router = async () => {
         }
     }
 
-    // Render Header only if not in Admin area
+    // --- Route Protection ---
     const isAdminRoute = path.startsWith('/admin');
+    const isLoginPage = path === '/admin/login';
+    
+    if (isAdminRoute && !isLoginPage) {
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (!user || user.role !== 'admin') {
+            console.warn("Access Denied: Redirecting to Admin Login");
+            navigateTo('/admin/login');
+            return;
+        }
+    }
+
+    // Render Header only if not in Admin area
     const headerHTML = isAdminRoute ? '' : Header.render();
     content.innerHTML = headerHTML + '<div id="page-container"></div>';
 

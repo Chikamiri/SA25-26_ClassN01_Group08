@@ -13,7 +13,7 @@ class MovieService:
         self.movie_repo = MovieRepository()
         self.BOOKING_SERVICE_URL = os.getenv("BOOKING_SERVICE_URL", "http://127.0.0.1:5002")
         self.RABBITMQ_HOST = os.getenv("RABBITMQ_HOST", "localhost")
-        self.RABBITMQ_URL = os.getenv('RABBITMQ_URL', f'amqp://guest:guest@{self.RABBITMQ_HOST}:5672/')
+        self.RABBITMQ_URL = os.getenv("RABBITMQ_URL")
 
     def validate_showtime_duration(self, movie_id, start_time_str, end_time_str):
         movie = self.movie_repo.get_movie(movie_id)
@@ -31,19 +31,17 @@ class MovieService:
             raise ValueError("End time must be after start time")
         
         diff_minutes = (end - start).total_seconds() / 60
-        if diff_minutes > movie.duration:
-            raise ValueError(f"Showtime duration ({diff_minutes} mins) exceeds movie duration ({movie.duration} mins)")
+        if diff_minutes < movie.duration:
+            raise ValueError(f"Showtime duration ({diff_minutes} mins) is shorter than movie duration ({movie.duration} mins)")
         
         return movie
 
     def send_notification_event(self, message_data):
         try:
-            if self.RABBITMQ_HOST != 'localhost':
-                 params = pika.ConnectionParameters(host=self.RABBITMQ_HOST, port=5672)
-            elif 'localhost' in self.RABBITMQ_URL:
-                 params = pika.ConnectionParameters(host='localhost', port=5672)
-            else:
+            if self.RABBITMQ_URL:
                  params = pika.URLParameters(self.RABBITMQ_URL)
+            else:
+                 params = pika.ConnectionParameters(host=self.RABBITMQ_HOST, port=5672)
             
             connection = pika.BlockingConnection(params)
             channel = connection.channel()
@@ -88,10 +86,10 @@ class MovieService:
             print(f"Error processing refund: {e}")
             return 0
 
-    def add_movie(self, id, title, genre, duration, release_date, image_url=None):
+    def add_movie(self, id, title, genre, duration, release_date, image_url=None, description=None):
         if id and self.movie_repo.get_movie(id):
             raise ValueError(f"Movie ID {id} already exists")
-        new_id = self.movie_repo.add_movie(id, title, genre, duration, release_date, image_url)
+        new_id = self.movie_repo.add_movie(id, title, genre, duration, release_date, image_url, description)
         return {"message": "Movie created", "id": new_id}
 
     def get_all_movies(self):
@@ -106,10 +104,10 @@ class MovieService:
         movie = self.movie_repo.get_movie(movie_id)
         return movie.to_dict() if movie else None
 
-    def update_movie(self, movie_id, title, genre, duration, release_date, image_url=None):
+    def update_movie(self, movie_id, title, genre, duration, release_date, image_url=None, description=None):
         if not self.movie_repo.get_movie(movie_id):
             raise ValueError("Movie ID not found")
-        self.movie_repo.update_movie(movie_id, title, genre, duration, release_date, image_url)
+        self.movie_repo.update_movie(movie_id, title, genre, duration, release_date, image_url, description)
         return {"message": "Movie updated", "id": movie_id}
 
     def delete_movie(self, movie_id):

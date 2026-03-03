@@ -137,4 +137,18 @@
 - Implement movie posters both front and back end.
 - Improved Movie Management UX: Added cross-clearing logic for File Upload and Image URL inputs.
 - Updated `seed_db.py` to simulate grouped seat bookings in the test dataset.
+- More tests.
 - Update `README.md`.
+
+## 3/3/2026
+
+- Fixed `TypeError` in `BookingService.create_seats` by making `seats_per_row` optional.
+- Added missing `BOOKING_SERVICE_URL` to `movie_service` in `docker-compose.yml`.
+- Corrected inverted showtime duration validation logic in `MovieService`.
+- Updated `add_payment_method` API to return the newly created card's `id`.
+- Implemented `movie.description` field across database, model, service, and frontend (`MovieDetailsPage`).
+- Updated `seed_db.py` with actual movie descriptions.
+- Removed duplicate `import os` in `gateway/app.py`.
+- Removed redundant `COPY seed_db.py` in `Dockerfile.backend`.
+- Refactored RabbitMQ connection logic across all services to eliminate unreachable code.
+- Implemented centralized frontend route protection for `/admin/*` pages in `main.js`.

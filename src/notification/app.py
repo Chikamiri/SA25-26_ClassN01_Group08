@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 RABBITMQ_HOST = os.getenv('RABBITMQ_HOST', 'localhost')
+# Default with explicit guest:guest for Docker environments
 RABBITMQ_URL = os.getenv('RABBITMQ_URL', f'amqp://guest:guest@{RABBITMQ_HOST}:5672/')
 
 def connect_rabbitmq():
@@ -14,18 +15,19 @@ def connect_rabbitmq():
         try:
             print(f"[INFO] Connecting to RabbitMQ at {RABBITMQ_HOST}...")
             
-            if RABBITMQ_HOST != 'localhost':
-                 params = pika.ConnectionParameters(host=RABBITMQ_HOST, port=5672)
-            elif 'localhost' in RABBITMQ_URL:
-                 params = pika.ConnectionParameters(host='localhost', port=5672)
-            else:
-                 params = pika.URLParameters(RABBITMQ_URL)
+            # 1. Try URL parameters first as it includes explicit credentials
+            params = pika.URLParameters(RABBITMQ_URL)
             
+            # Alternative: Basic host params if URL is not used
+            # params = pika.ConnectionParameters(host=RABBITMQ_HOST, port=5672)
+
             connection = pika.BlockingConnection(params)
             print("[INFO] Successfully connected to RabbitMQ!")
             return connection
         except Exception as e:
-            print(f"[ERROR] Connection failed: {e}. Retrying in 5 seconds...")
+            # More descriptive logging for empty exception strings
+            err_msg = str(e) or type(e).__name__
+            print(f"[ERROR] Connection failed: {err_msg}. Retrying in 5 seconds...")
             time.sleep(5)
 
 def callback(ch, method, properties, body):

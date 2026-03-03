@@ -1,11 +1,12 @@
 class Movie:
-    def __init__(self, id, title, genre, duration, release_date, image_url=None):
+    def __init__(self, id, title, genre, duration, release_date, image_url=None, description=None):
         self.id = id
         self.title = title
         self.genre = genre
         self.duration = duration
         self.release_date = release_date
         self.image_url = image_url
+        self.description = description
 
     def to_dict(self):
         return {
@@ -14,7 +15,8 @@ class Movie:
             "genre": self.genre,
             "duration": self.duration,
             "release_date": self.release_date,
-            "image_url": self.image_url
+            "image_url": self.image_url,
+            "description": self.description
         }
 
 class Showtime:

@@ -37,7 +37,8 @@ def create_movie():
             data['genre'], 
             data['duration'], 
             data['release_date'],
-            data.get('image_url')
+            data.get('image_url'),
+            data.get('description')
         )
         return jsonify(res), 201
     except Exception as e: return jsonify({"error": str(e)}), 400
@@ -52,7 +53,8 @@ def update_movie(movie_id):
             data['genre'], 
             data['duration'], 
             data['release_date'],
-            data.get('image_url')
+            data.get('image_url'),
+            data.get('description')
         )
         return jsonify(res), 200
     except Exception as e: return jsonify({"error": str(e)}), 400

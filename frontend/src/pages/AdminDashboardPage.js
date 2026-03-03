@@ -10,19 +10,6 @@ const AdminDashboardPage = {
     console.log("AdminDashboardPage: Rendering v1.1.0...");
     const user = JSON.parse(localStorage.getItem('user'));
     
-    if (!user || user.role !== 'admin') {
-        return `
-          <div class="container py-5 text-center">
-            <div class="alert alert-danger d-inline-block shadow-sm">
-              <h4 class="alert-heading"><i class="bi bi-shield-lock"></i> Access Denied!</h4>
-              <p>You do not have permission to access this page.</p>
-              <hr>
-              <a href="/admin/login" class="btn btn-outline-danger btn-sm">Admin Login</a>
-            </div>
-          </div>
-        `;
-    }
-
     // Fetch Data
     let moviesCount = 0;
     let revenue = 0;

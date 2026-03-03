@@ -23,7 +23,8 @@ class MovieRepository:
                 genre TEXT NOT NULL,
                 duration INTEGER NOT NULL,
                 release_date TEXT NOT NULL,
-                image_url TEXT
+                image_url TEXT,
+                description TEXT
             )
         ''')
 
@@ -32,6 +33,8 @@ class MovieRepository:
         columns = [info[1] for info in cursor.fetchall()]
         if 'image_url' not in columns:
             cursor.execute("ALTER TABLE movies ADD COLUMN image_url TEXT")
+        if 'description' not in columns:
+            cursor.execute("ALTER TABLE movies ADD COLUMN description TEXT")
 
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS rooms (
@@ -91,20 +94,20 @@ class MovieRepository:
 
     # --- Movie Methods ---
 
-    def add_movie(self, id, title, genre, duration, release_date, image_url=None):
+    def add_movie(self, id, title, genre, duration, release_date, image_url=None, description=None):
         conn = self._get_connection()
         cursor = conn.cursor()
         
         if id is not None:
             cursor.execute(
-                'INSERT INTO movies (id, title, genre, duration, release_date, image_url) VALUES (?, ?, ?, ?, ?, ?)',
-                (id, title, genre, duration, release_date, image_url)
+                'INSERT INTO movies (id, title, genre, duration, release_date, image_url, description) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                (id, title, genre, duration, release_date, image_url, description)
             )
             new_id = id
         else:
             cursor.execute(
-                'INSERT INTO movies (title, genre, duration, release_date, image_url) VALUES (?, ?, ?, ?, ?)',
-                (title, genre, duration, release_date, image_url)
+                'INSERT INTO movies (title, genre, duration, release_date, image_url, description) VALUES (?, ?, ?, ?, ?, ?)',
+                (title, genre, duration, release_date, image_url, description)
             )
             new_id = cursor.lastrowid
             
@@ -114,36 +117,62 @@ class MovieRepository:
 
     def get_movie(self, movie_id):
         conn = self._get_connection()
+        conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         cursor.execute('SELECT * FROM movies WHERE id = ?', (movie_id,))
         row = cursor.fetchone()
         conn.close()
         if row:
-            # We assume the order: id, title, genre, duration, release_date, image_url
-            return Movie(id=row[0], title=row[1], genre=row[2], duration=row[3], release_date=row[4], image_url=row[5] if len(row) > 5 else None)
+            return Movie(
+                id=row['id'], 
+                title=row['title'], 
+                genre=row['genre'], 
+                duration=row['duration'], 
+                release_date=row['release_date'], 
+                image_url=row['image_url'],
+                description=row['description'] if 'description' in row.keys() else None
+            )
         return None
 
     def get_all_movies(self):
         conn = self._get_connection()
+        conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         cursor.execute('SELECT * FROM movies')
         rows = cursor.fetchall()
         conn.close()
-        return [Movie(id=r[0], title=r[1], genre=r[2], duration=r[3], release_date=r[4], image_url=r[5] if len(r) > 5 else None) for r in rows]
+        return [Movie(
+            id=r['id'], 
+            title=r['title'], 
+            genre=r['genre'], 
+            duration=r['duration'], 
+            release_date=r['release_date'], 
+            image_url=r['image_url'],
+            description=r['description'] if 'description' in r.keys() else None
+        ) for r in rows]
 
     def search_movies(self, query):
         conn = self._get_connection()
+        conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM movies WHERE title LIKE ?", (f'%{query}%',))
         rows = cursor.fetchall()
         conn.close()
-        return [Movie(id=r[0], title=r[1], genre=r[2], duration=r[3], release_date=r[4], image_url=r[5] if len(r) > 5 else None) for r in rows]
+        return [Movie(
+            id=r['id'], 
+            title=r['title'], 
+            genre=r['genre'], 
+            duration=r['duration'], 
+            release_date=r['release_date'], 
+            image_url=r['image_url'],
+            description=r['description'] if 'description' in r.keys() else None
+        ) for r in rows]
 
-    def update_movie(self, movie_id, title, genre, duration, release_date, image_url=None):
+    def update_movie(self, movie_id, title, genre, duration, release_date, image_url=None, description=None):
         conn = self._get_connection()
         conn.execute(
-            'UPDATE movies SET title = ?, genre = ?, duration = ?, release_date = ?, image_url = ? WHERE id = ?',
-            (title, genre, duration, release_date, image_url, movie_id)
+            'UPDATE movies SET title = ?, genre = ?, duration = ?, release_date = ?, image_url = ?, description = ? WHERE id = ?',
+            (title, genre, duration, release_date, image_url, description, movie_id)
         )
         conn.commit()
         conn.close()
