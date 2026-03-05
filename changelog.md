@@ -153,3 +153,7 @@
 - Refactored RabbitMQ connection logic across all services to eliminate unreachable code.
 - Implemented centralized frontend route protection for `/admin/*` pages in `main.js`.
 - RabbitMQ's connecting issue
+
+## 5/3/2026
+
+- Added C4 model (All 4 level) and Use case (Customer and Admin).
