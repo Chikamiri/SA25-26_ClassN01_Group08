@@ -3,7 +3,7 @@ import uuid
 
 class TestUser(TestBase):
     
-    def test_01_user_register(self):
+    def test_07_user_register(self):
         """TC_USER_01: Register a new user via Gateway"""
         print(f"\n{Colors.BOLD}--- User: Register ---{Colors.RESET}")
         uid = str(uuid.uuid4())[:8]
@@ -13,7 +13,7 @@ class TestUser(TestBase):
         self._req('POST', endpoint='/api/auth/register', payload={"email": email, "password": "123"}, status=201)
         self.state['user_email'] = email
 
-    def test_02_user_login(self):
+    def test_08_user_login(self):
         """TC_USER_03: Login via Gateway"""
         print(f"\n{Colors.BOLD}--- User: Login ---{Colors.RESET}")
         # Note: API Gateway auth_proxy expects email/password
@@ -22,13 +22,13 @@ class TestUser(TestBase):
         self.state['user_token'] = resp.json().get('token')
         self.assertIsNotNone(self.state['user_token'])
 
-    def test_03_get_profile(self):
+    def test_09_get_profile(self):
         """TC_USER_05: Get user profile (me)"""
         print(f"\n{Colors.BOLD}--- User: Profile ---{Colors.RESET}")
         resp = self._req('GET', endpoint='/api/users/me', headers=self.get_auth_headers(), status=200)
         self.assertEqual(resp.json().get('email'), self.state['user_email'])
 
-    def test_04_admin_list_users(self):
+    def test_10_admin_list_users(self):
         """TC_USER_06: Admin list all users"""
         print(f"\n{Colors.BOLD}--- User: Admin List ---{Colors.RESET}")
         # We need admin token

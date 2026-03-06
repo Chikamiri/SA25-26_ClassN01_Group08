@@ -157,3 +157,10 @@
 ## 5/3/2026
 
 - Added C4 model (All 4 level) and Use case (Customer and Admin).
+
+## 6/3/2026
+
+- Documentation for test suite
+- Fixed RabbitMQ integration test
+- Re-numbering the test cases
+- Remove logs/ from '.gitignore'

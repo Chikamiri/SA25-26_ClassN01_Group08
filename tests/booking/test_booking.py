@@ -2,7 +2,7 @@ from tests.base import TestBase, Colors
 
 class TestBooking(TestBase):
     
-    def test_15_booking_grouped_seats(self):
+    def test_18_booking_grouped_seats(self):
         """TC_BOOKING_01: Book multiple seats in a single ID"""
         print(f"\n{Colors.BOLD}--- Booking: Grouped Seats ---{Colors.RESET}")
         
@@ -28,7 +28,7 @@ class TestBooking(TestBase):
         self.assertEqual(data["seats"], f"{seat1}, {seat2}")
         print(f" -> Created Grouped Booking #{data['booking_id']}")
 
-    def test_16_booking_atomicity(self):
+    def test_19_booking_atomicity(self):
         """TC_BOOKING_02: Atomic failure if one seat is taken"""
         print(f"\n{Colors.BOLD}--- Booking: Atomicity ---{Colors.RESET}")
         
@@ -49,27 +49,27 @@ class TestBooking(TestBase):
         err = resp.json().get('error', '')
         self.assertTrue("not available" in err or "no longer available" in err)
 
-    def test_17_booking_no_auth(self):
+    def test_20_booking_no_auth(self):
         """TC_BOOKING_03: Verify 401 without token"""
         print(f"\n{Colors.BOLD}--- Booking: Unauthorized ---{Colors.RESET}")
         payload = {"showtime_id": 1, "seat_numbers": ["A1"]}
         # _req adds API-KEY, but we need JWT for bookings
         self._req('POST', endpoint='/api/bookings', payload=payload, status=401)
 
-    def test_18_booking_my_list(self):
+    def test_21_booking_my_list(self):
         """TC_BOOKING_04: Get customer's booking list"""
         print(f"\n{Colors.BOLD}--- Booking: My Bookings ---{Colors.RESET}")
         resp = self._req('GET', endpoint='/api/bookings', headers=self.get_auth_headers(), status=200)
         self.assertIsInstance(resp.json(), list)
 
-    def test_19_booking_detail(self):
+    def test_22_booking_detail(self):
         """TC_BOOKING_05: Get single booking detail"""
         print(f"\n{Colors.BOLD}--- Booking: Detail ---{Colors.RESET}")
         if not self.state['booking_id']: self.skipTest("No booking ID")
         resp = self._req('GET', endpoint=f"/api/bookings/{self.state['booking_id']}", headers=self.get_auth_headers(), status=200)
         self.assertEqual(resp.json().get('id'), self.state['booking_id'])
 
-    def test_20_booking_cascade_release(self):
+    def test_23_booking_cascade_release(self):
         """TC_BOOKING_07: Deleting grouped booking releases all seats"""
         print(f"\n{Colors.BOLD}--- Booking: Cascade Release ---{Colors.RESET}")
         
